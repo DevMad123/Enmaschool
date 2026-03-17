@@ -13,6 +13,7 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ActivityLogController extends Controller
 {
@@ -78,7 +79,7 @@ class ActivityLogController extends Controller
     // GET /central/activity-logs/export
     // -------------------------------------------------------------------------
 
-    public function export(Request $request): Response|JsonResponse
+    public function export(Request $request): StreamedResponse|JsonResponse
     {
         $filters = array_filter([
             'log_type'      => $request->input('log_type'),

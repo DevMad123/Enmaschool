@@ -31,7 +31,6 @@ class TenantController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Tenant::with(['profile', 'plan', 'currentSubscription'])
-            ->withCount('tenants as tenants_count')
             ->orderBy('created_at', 'desc');
 
         // Filtres

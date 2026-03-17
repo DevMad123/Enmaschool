@@ -185,6 +185,7 @@ class SupportTicketController extends Controller
             'attachments' => $validated['attachments'] ?? [],
             'author_type' => 'super_admin',
             'author_id'   => $admin->id,
+            'author_name' => $admin->name,
         ]);
 
         // Si le ticket est ouvert, passer à in_progress

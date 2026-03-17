@@ -7,6 +7,7 @@ namespace App\Providers;
 
 use App\Models\Central\Tenant;
 use App\Observers\Central\TenantObserver;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,5 +26,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Tenant::observe(TenantObserver::class);
+
+        // Explicit model binding for Tenant (BaseTenant uses UUID primary key)
+        Route::bind('tenant', fn (string $value) => Tenant::findOrFail($value));
     }
 }

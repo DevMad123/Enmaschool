@@ -70,7 +70,7 @@ export interface AuthState {
     token: string,
     permissions: string[],
     roles: string[],
-    school: School,
+    school: School | null,
   ) => void;
   clearAuth: () => void;
   updateUser: (partial: Partial<User>) => void;

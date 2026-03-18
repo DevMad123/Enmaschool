@@ -6,6 +6,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Central\ActivityLogController;
 use App\Http\Controllers\Central\Auth\SuperAdminAuthController;
 use App\Http\Controllers\Central\DashboardController;
+use App\Http\Controllers\Central\GlobalUserController;
 use App\Http\Controllers\Central\ModuleController;
 use App\Http\Controllers\Central\PlanController;
 use App\Http\Controllers\Central\SubscriptionController;
@@ -70,6 +71,7 @@ Route::middleware(['auth:sanctum'])->prefix('central')->group(function (): void 
 
     // ---- Modules système ----------------------------------------------------
     Route::get('/modules', [ModuleController::class, 'index']);
+    Route::put('/modules/{moduleKey}', [ModuleController::class, 'update']);
 
     // ---- Abonnements --------------------------------------------------------
     Route::get('/subscriptions',                        [SubscriptionController::class, 'index']);
@@ -90,4 +92,8 @@ Route::middleware(['auth:sanctum'])->prefix('central')->group(function (): void 
     // ---- Paramètres système -------------------------------------------------
     Route::get('/settings', [SystemSettingController::class, 'index']);
     Route::put('/settings', [SystemSettingController::class, 'update']);
+    Route::post('/settings/test-smtp', [SystemSettingController::class, 'testSmtp']);
+
+    // ---- Utilisateurs globaux -----------------------------------------------
+    Route::get('/users', [GlobalUserController::class, 'index']);
 });

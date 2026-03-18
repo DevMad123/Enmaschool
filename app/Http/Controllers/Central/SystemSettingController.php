@@ -11,6 +11,7 @@ use App\Http\Resources\Central\SystemSettingResource;
 use App\Services\Central\SystemSettingService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class SystemSettingController extends Controller
@@ -62,5 +63,41 @@ class SystemSettingController extends Controller
         );
 
         return $this->success($result, 'Paramètres mis à jour.');
+    }
+
+    // -------------------------------------------------------------------------
+    // POST /central/settings/test-smtp
+    // -------------------------------------------------------------------------
+
+    public function testSmtp(Request $request): JsonResponse
+    {
+        $host     = $request->input('smtp_host');
+        $port     = (int) $request->input('smtp_port', 587);
+        $username = $request->input('smtp_user');
+        $password = $request->input('smtp_password');
+
+        if (! $host || ! $port || ! $username) {
+            return $this->error('Veuillez renseigner l\'hôte, le port et l\'utilisateur SMTP.', 422);
+        }
+
+        try {
+            $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport(
+                $host,
+                $port,
+            );
+            $transport->setUsername($username);
+            $transport->setPassword($password ?? '');
+
+            // Attempt to connect
+            $transport->start();
+            $transport->stop();
+
+            return $this->success(null, 'Connexion SMTP réussie !');
+        } catch (\Throwable $e) {
+            return $this->error(
+                'Échec de la connexion SMTP : ' . $e->getMessage(),
+                422
+            );
+        }
     }
 }

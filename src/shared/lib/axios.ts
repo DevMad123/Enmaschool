@@ -4,8 +4,11 @@ import axios from 'axios';
 import type { ApiError } from '@/shared/types/api.types';
 import { useAuthStore } from '@/modules/auth/store/authStore';
 
+// En multi-tenant, le baseURL doit pointer sur le domaine courant :
+// - Sur enmaschool.com:8000  → routes central (/central/...)
+// - Sur demo.enmaschool.test:8000 → routes tenant (/api/...)
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: window.location.origin,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -42,7 +45,8 @@ api.interceptors.response.use(
 
     if (status === 401) {
       useAuthStore.getState().clearAuth();
-      window.location.href = '/login';
+      const isAdminRoute = window.location.pathname.startsWith('/admin');
+      window.location.href = isAdminRoute ? '/admin/login' : '/login';
     }
 
     if (status === 402 && code === 'TRIAL_EXPIRED') {

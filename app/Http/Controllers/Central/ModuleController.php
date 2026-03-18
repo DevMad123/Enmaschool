@@ -35,6 +35,32 @@ class ModuleController extends Controller
     }
 
     // -------------------------------------------------------------------------
+    // PUT /central/modules/{moduleKey}
+    // -------------------------------------------------------------------------
+
+    public function update(Request $request, string $moduleKey): JsonResponse
+    {
+        $module = SystemModule::where('key', $moduleKey)->firstOrFail();
+
+        $validated = $request->validate([
+            'is_active'     => ['sometimes', 'boolean'],
+            'available_for' => ['sometimes', 'array'],
+            'available_for.*' => ['string', 'in:maternelle,primary,college,lycee'],
+        ]);
+
+        if ($module->is_core && isset($validated['is_active']) && !$validated['is_active']) {
+            return $this->error(
+                "Le module «{$module->name}» est un module de base et ne peut pas être désactivé.",
+                422
+            );
+        }
+
+        $module->update($validated);
+
+        return $this->success(new SystemModuleResource($module), 'Module mis à jour.');
+    }
+
+    // -------------------------------------------------------------------------
     // GET /central/tenants/{tenant}/modules
     // -------------------------------------------------------------------------
 

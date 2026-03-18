@@ -65,6 +65,11 @@ class User extends Authenticatable
         return $query->where('role', $role);
     }
 
+    public function scopeStaff(Builder $query): Builder
+    {
+        return $query->whereIn('role', array_column(UserRole::staffRoles(), 'value'));
+    }
+
     // -------------------------------------------------------------------------
     // Accessors
     // -------------------------------------------------------------------------
@@ -86,5 +91,15 @@ class User extends Authenticatable
 
         return 'https://ui-avatars.com/api/?name=' . urlencode($initials)
             . '&background=4f46e5&color=ffffff&size=128';
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === UserStatus::Active;
+    }
+
+    public function hasModulePermission(string $module, string $action): bool
+    {
+        return $this->can("{$module}.{$action}");
     }
 }

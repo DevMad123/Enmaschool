@@ -1,8 +1,9 @@
 // ===== src/modules/auth/store/authStore.ts =====
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { AuthState, School, User } from '@/shared/types/auth.types';
+import { useSchoolStore } from '@/modules/school/store/schoolStore';
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -19,7 +20,7 @@ export const useAuthStore = create<AuthState>()(
         token: string,
         permissions: string[],
         roles: string[],
-        school: School,
+        school: School | null,
       ) =>
         set({
           user,
@@ -30,7 +31,8 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
         }),
 
-      clearAuth: () =>
+      clearAuth: () => {
+        useSchoolStore.getState().reset();
         set({
           user: null,
           token: null,
@@ -38,7 +40,8 @@ export const useAuthStore = create<AuthState>()(
           roles: [],
           school: null,
           isAuthenticated: false,
-        }),
+        });
+      },
 
       updateUser: (partial: Partial<User>) =>
         set((state) => ({
@@ -47,6 +50,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'enma-auth',
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
         token: state.token,

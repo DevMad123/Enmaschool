@@ -5,6 +5,15 @@ import { useMutation } from '@tanstack/react-query';
 import {
   LayoutDashboard,
   LogOut,
+  Settings,
+  CalendarDays,
+  Layers,
+  Users,
+  BookOpen,
+  DoorOpen,
+  UserCog,
+  MailPlus,
+  Shield,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -24,6 +33,15 @@ import { cn } from '@/shared/lib/utils';
 // ── Icon map (extend as modules grow) ────────────────────────────────
 const iconMap: Record<string, LucideIcon> = {
   LayoutDashboard,
+  Settings,
+  CalendarDays,
+  Layers,
+  Users,
+  BookOpen,
+  DoorOpen,
+  UserCog,
+  MailPlus,
+  Shield,
 };
 
 function getIcon(name: string): LucideIcon {
@@ -78,10 +96,10 @@ export function Sidebar() {
     },
   });
 
-  // Filter nav items by role
+  // Filter nav items by role (tenant nav never contains super_admin, safe cast)
   const filteredNav = navigation.filter((item) => {
     if (!item.roles) return true;
-    return hasRole(item.roles);
+    return hasRole(item.roles as import('@/shared/types/auth.types').UserRole[]);
   });
 
   const initials = user

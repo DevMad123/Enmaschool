@@ -150,6 +150,9 @@ class DatabaseSeeder extends Seeder
                 'status' => UserStatus::Active,
             ]);
             $teacher->assignRole(UserRole::Teacher->value);
+
+            // Permissions Spatie (Phase 3)
+            (new PermissionSeeder())->run();
         });
 
         // -----------------------------------------------------------------

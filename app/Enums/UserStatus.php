@@ -7,31 +7,28 @@ namespace App\Enums;
 
 enum UserStatus: string
 {
-    case Active = 'active';
-    case Inactive = 'inactive';
+    case Active    = 'active';
+    case Inactive  = 'inactive';
     case Suspended = 'suspended';
+    case Pending   = 'pending';
 
-    /**
-     * Libellé français du statut.
-     */
     public function label(): string
     {
         return match ($this) {
-            self::Active => 'Actif',
-            self::Inactive => 'Inactif',
+            self::Active    => 'Actif',
+            self::Inactive  => 'Inactif',
             self::Suspended => 'Suspendu',
+            self::Pending   => 'En attente',
         };
     }
 
-    /**
-     * Couleur du badge associée au statut.
-     */
     public function color(): string
     {
         return match ($this) {
-            self::Active => 'green',
-            self::Inactive => 'gray',
+            self::Active    => 'green',
+            self::Inactive  => 'gray',
             self::Suspended => 'red',
+            self::Pending   => 'orange',
         };
     }
 }

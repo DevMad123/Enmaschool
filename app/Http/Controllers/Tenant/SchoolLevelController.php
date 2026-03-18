@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Tenant;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\Tenant\SchoolLevelResource;
+use App\Models\Tenant\SchoolLevel;
+use App\Traits\ApiResponse;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class SchoolLevelController extends Controller
+{
+    use ApiResponse;
+
+    public function index(Request $request): JsonResponse
+    {
+        $query = SchoolLevel::forTenant()->active()->orderBy('order');
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->input('category'));
+        }
+
+        $levels = $query->get();
+
+        return $this->success(data: SchoolLevelResource::collection($levels));
+    }
+
+    public function toggle(SchoolLevel $level): JsonResponse
+    {
+        $level->update(['is_active' => ! $level->is_active]);
+
+        return $this->success(
+            data: new SchoolLevelResource($level->fresh()),
+            message: $level->is_active ? 'Niveau activé.' : 'Niveau désactivé.',
+        );
+    }
+}

@@ -28,9 +28,15 @@ class SystemSettingService
     public function updateMany(array $settings): void
     {
         foreach ($settings as $key => $value) {
-            $serialized = is_array($value) || is_object($value)
-                ? json_encode($value)
-                : (string) $value;
+            if (is_array($value) || is_object($value)) {
+                $serialized = json_encode($value);
+            } elseif (is_bool($value)) {
+                $serialized = $value ? 'true' : 'false';
+            } elseif ($value === null) {
+                $serialized = '';
+            } else {
+                $serialized = (string) $value;
+            }
 
             SystemSetting::where('key', $key)->update([
                 'value' => $serialized,

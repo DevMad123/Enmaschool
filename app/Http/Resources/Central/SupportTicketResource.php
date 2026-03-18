@@ -50,6 +50,18 @@ class SupportTicketResource extends JsonResource
             }),
 
             'replies_count' => $this->whenCounted('replies', fn () => $this->replies_count),
+
+            'replies' => $this->whenLoaded('replies', function () {
+                return $this->replies->map(fn ($reply) => [
+                    'id'          => $reply->id,
+                    'author_type' => $reply->author_type,
+                    'author_id'   => $reply->author_id,
+                    'author_name' => $reply->author_name,
+                    'message'     => $reply->message,
+                    'created_at'  => $reply->created_at?->toIso8601String(),
+                ])->values();
+            }),
+
             'resolved_at'   => $this->resolved_at?->toIso8601String(),
             'created_at'    => $this->created_at?->toIso8601String(),
         ];

@@ -1,16 +1,62 @@
 // ===== src/app/routes.tsx =====
 
+import { useState, useEffect } from 'react';
 import { Navigate, type RouteObject } from 'react-router-dom';
 import { useAuthStore } from '@/modules/auth/store/authStore';
-import type { UserRole } from '@/shared/types/auth.types';
 
-// ── Lazy-loaded pages ────────────────────────────────────────────────
+// ── Pages ────────────────────────────────────────────────────────────
 import { LoginPage } from '@/modules/auth/pages/LoginPage';
+import { AdminLoginPage } from '@/modules/superadmin/pages/AdminLoginPage';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
+import { SuperAdminLayout } from '@/modules/superadmin/layout/SuperAdminLayout';
+import { DashboardPage as SuperAdminDashboardPage } from '@/modules/superadmin/pages/DashboardPage';
+import { TenantListPage } from '@/modules/superadmin/pages/tenants/TenantListPage';
+import { TenantDetailPage } from '@/modules/superadmin/pages/tenants/TenantDetailPage';
+import { CreateTenantPage } from '@/modules/superadmin/pages/tenants/CreateTenantPage';
+import { EditTenantPage } from '@/modules/superadmin/pages/tenants/EditTenantPage';
+import { PlanListPage } from '@/modules/superadmin/pages/plans/PlanListPage';
+import { GlobalUsersPage } from '@/modules/superadmin/pages/users/GlobalUsersPage';
+import { SystemModulesPage } from '@/modules/superadmin/pages/modules/SystemModulesPage';
+import { ActivityLogPage } from '@/modules/superadmin/pages/activity/ActivityLogPage';
+import { TicketListPage } from '@/modules/superadmin/pages/support/TicketListPage';
+import { TicketDetailPage } from '@/modules/superadmin/pages/support/TicketDetailPage';
+import { SystemSettingsPage } from '@/modules/superadmin/pages/settings/SystemSettingsPage';
 
-// ── Guard : authenticated ────────────────────────────────────────────
+// ── School module pages (Phase 2) ────────────────────────────────────
+import { SchoolSettingsPage } from '@/modules/school/pages/SchoolSettingsPage';
+import { AcademicYearsPage } from '@/modules/school/pages/AcademicYearsPage';
+import { SchoolLevelsPage } from '@/modules/school/pages/SchoolLevelsPage';
+import { ClassesPage } from '@/modules/school/pages/ClassesPage';
+import { ClasseDetailPage } from '@/modules/school/pages/ClasseDetailPage';
+import { SubjectsPage } from '@/modules/school/pages/SubjectsPage';
+import { RoomsPage } from '@/modules/school/pages/RoomsPage';
+
+// ── School module pages (Phase 3) ────────────────────────────────────
+import { UsersPage } from '@/modules/school/pages/users/UsersPage';
+import { UserDetailPage } from '@/modules/school/pages/users/UserDetailPage';
+import { InvitationsPage } from '@/modules/school/pages/users/InvitationsPage';
+import { RolesPermissionsPage } from '@/modules/school/pages/users/RolesPermissionsPage';
+import { AcceptInvitationPage } from '@/modules/school/pages/users/AcceptInvitationPage';
+
+// ── Hydration hook (waits for Zustand persist to rehydrate from localStorage)
+function useHydrated() {
+  const [hydrated, setHydrated] = useState(() => useAuthStore.persist.hasHydrated());
+  useEffect(() => {
+    if (hydrated) return;
+    const unsub = useAuthStore.persist.onFinishHydration(() => setHydrated(true));
+    // Guard against hydration completing between render and this effect firing
+    if (useAuthStore.persist.hasHydrated()) setHydrated(true);
+    return unsub;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return hydrated;
+}
+
+// ── Guard : authenticated (tenant) ──────────────────────────────────
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const hydrated = useHydrated();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  if (!hydrated) return null;
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -19,16 +65,30 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// ── Guard : role-based ───────────────────────────────────────────────
+// ── Guard : authenticated (super_admin) ──────────────────────────────
+function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
+  const hydrated = useHydrated();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const roles = useAuthStore((s) => s.roles);
+
+  if (!hydrated) return null;
+
+  if (!isAuthenticated || !roles.includes('super_admin')) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+// ── Guard : role-based (tenant) ───────────────────────────────────────
 function RoleRoute({
   roles,
   children,
 }: {
-  roles: UserRole[];
+  roles: string[];
   children: React.ReactNode;
 }) {
   const userRoles = useAuthStore((s) => s.roles);
-
   const hasAccess = roles.some((r) => userRoles.includes(r));
 
   if (!hasAccess) {
@@ -149,12 +209,32 @@ function DashboardPage() {
   );
 }
 
+// ── SuperAdmin placeholder pages ─────────────────────────────────────
+function AdminPlaceholderPage({ title }: { title: string }) {
+  return (
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-1">{title}</h1>
+      <p className="text-gray-500 text-sm">
+        Cette page est en cours de développement.
+      </p>
+    </div>
+  );
+}
+
 // ── Routes ───────────────────────────────────────────────────────────
 export const routes: RouteObject[] = [
   {
     path: '/login',
     element: <LoginPage />,
   },
+
+  // Route publique — accepter une invitation (sans layout)
+  {
+    path: '/accept-invitation',
+    element: <AcceptInvitationPage />,
+  },
+
+  // ── Tenant app routes ─────────────────────────────────────────────
   {
     path: '/',
     element: (
@@ -185,8 +265,197 @@ export const routes: RouteObject[] = [
           </RoleRoute>
         ),
       },
+
+      // ── School Configuration (Phase 2) ───────────────────────────────
+      {
+        path: 'school/settings',
+        element: (
+          <RoleRoute roles={['school_admin', 'director']}>
+            <SchoolSettingsPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/academic-years',
+        element: (
+          <RoleRoute roles={['school_admin', 'director']}>
+            <AcademicYearsPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/levels',
+        element: (
+          <RoleRoute roles={['school_admin', 'director']}>
+            <SchoolLevelsPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/classes',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <ClassesPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/classes/:id',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <ClasseDetailPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/subjects',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <SubjectsPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/rooms',
+        element: (
+          <RoleRoute roles={['school_admin', 'director']}>
+            <RoomsPage />
+          </RoleRoute>
+        ),
+      },
+
+      // ── Rôles & Utilisateurs (Phase 3) ───────────────────────────────
+      {
+        path: 'school/users',
+        element: (
+          <RoleRoute roles={['school_admin', 'director']}>
+            <UsersPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/users/:id',
+        element: (
+          <RoleRoute roles={['school_admin', 'director']}>
+            <UserDetailPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/invitations',
+        element: (
+          <RoleRoute roles={['school_admin', 'director']}>
+            <InvitationsPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/roles-permissions',
+        element: (
+          <RoleRoute roles={['school_admin']}>
+            <RolesPermissionsPage />
+          </RoleRoute>
+        ),
+      },
     ],
   },
+
+  // ── SuperAdmin routes ─────────────────────────────────────────────
+  {
+    path: '/admin/login',
+    element: <AdminLoginPage />,
+  },
+  {
+    path: '/admin',
+    element: (
+      <AdminProtectedRoute>
+        <SuperAdminLayout />
+      </AdminProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <Navigate to="/admin/dashboard" replace />,
+      },
+      {
+        path: 'dashboard',
+        element: <SuperAdminDashboardPage />,
+      },
+      // Tenants
+      {
+        path: 'tenants',
+        element: <TenantListPage />,
+      },
+      {
+        path: 'tenants/create',
+        element: <CreateTenantPage />,
+      },
+      {
+        path: 'tenants/:id',
+        element: <TenantDetailPage />,
+      },
+      {
+        path: 'tenants/:id/edit',
+        element: <EditTenantPage />,
+      },
+      {
+        path: 'tenants/:id/modules',
+        element: <AdminPlaceholderPage title="Modules de l'école" />,
+      },
+      {
+        path: 'tenants/:id/activity',
+        element: <AdminPlaceholderPage title="Activité de l'école" />,
+      },
+      // Plans
+      {
+        path: 'plans',
+        element: <PlanListPage />,
+      },
+      {
+        path: 'plans/create',
+        element: <PlanListPage />,
+      },
+      {
+        path: 'plans/:id/edit',
+        element: <PlanListPage />,
+      },
+      // Modules
+      {
+        path: 'modules',
+        element: <SystemModulesPage />,
+      },
+      // Subscriptions
+      {
+        path: 'subscriptions',
+        element: <AdminPlaceholderPage title="Abonnements" />,
+      },
+      // Users
+      {
+        path: 'users',
+        element: <GlobalUsersPage />,
+      },
+      // Activity
+      {
+        path: 'activity',
+        element: <ActivityLogPage />,
+      },
+      // Tickets
+      {
+        path: 'tickets',
+        element: <TicketListPage />,
+      },
+      {
+        path: 'tickets/:id',
+        element: <TicketDetailPage />,
+      },
+      // Settings
+      {
+        path: 'settings',
+        element: <SystemSettingsPage />,
+      },
+    ],
+  },
+
   {
     path: '/unauthorized',
     element: <UnauthorizedPage />,

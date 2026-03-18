@@ -20,7 +20,7 @@ class UpdateSystemSettingsRequest extends FormRequest
         return [
             'settings'       => ['required', 'array'],
             'settings.*.key' => ['required', 'string', Rule::exists('central.system_settings', 'key')],
-            'settings.*.value' => ['required'],
+            'settings.*.value' => ['present', 'nullable'],
         ];
     }
 

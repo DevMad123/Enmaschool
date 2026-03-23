@@ -12,7 +12,19 @@ use App\Http\Controllers\Tenant\RoomController;
 use App\Http\Controllers\Tenant\SchoolLevelController;
 use App\Http\Controllers\Tenant\SchoolSettingController;
 use App\Http\Controllers\Tenant\SubjectController;
+use App\Http\Controllers\Tenant\AssignmentController;
+use App\Http\Controllers\Tenant\EnrollmentController;
+use App\Http\Controllers\Tenant\ParentController;
+use App\Http\Controllers\Tenant\StudentController;
+use App\Http\Controllers\Tenant\TeacherController;
 use App\Http\Controllers\Tenant\UserController;
+use App\Http\Controllers\Tenant\EvaluationController;
+use App\Http\Controllers\Tenant\GradeController;
+use App\Http\Controllers\Tenant\ReportCardController;
+use App\Http\Controllers\Tenant\AttendanceController;
+use App\Http\Controllers\Tenant\JustificationController;
+use App\Http\Controllers\Tenant\TimeSlotController;
+use App\Http\Controllers\Tenant\TimetableController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -137,6 +149,212 @@ Route::middleware([
                  ->middleware('role:school_admin');
             Route::get('permissions/available', [PermissionController::class, 'availablePermissions'])
                  ->middleware('can:users.roles.manage');
+
+            // ── Élèves (Phase 4) ─────────────────────────────────
+            Route::get('students/stats', [StudentController::class, 'stats'])
+                 ->middleware('can:students.view');
+            Route::get('students/import/template', [StudentController::class, 'exportTemplate'])
+                 ->middleware('can:students.view');
+            Route::post('students/import', [StudentController::class, 'import'])
+                 ->middleware('can:students.import');
+            Route::get('students/export', [StudentController::class, 'export'])
+                 ->middleware('can:students.view');
+
+            Route::get('students', [StudentController::class, 'index'])
+                 ->middleware('can:students.view');
+            Route::post('students', [StudentController::class, 'store'])
+                 ->middleware('can:students.create');
+            Route::get('students/{student}', [StudentController::class, 'show'])
+                 ->middleware('can:students.view');
+            Route::put('students/{student}', [StudentController::class, 'update'])
+                 ->middleware('can:students.edit');
+            Route::delete('students/{student}', [StudentController::class, 'destroy'])
+                 ->middleware('can:students.delete');
+            Route::get('students/{student}/parents', [StudentController::class, 'parents'])
+                 ->middleware('can:students.view');
+            Route::put('students/{student}/parents', [StudentController::class, 'syncParents'])
+                 ->middleware('can:students.edit');
+
+            // ── Inscriptions (Phase 4) ────────────────────────────
+            Route::post('enrollments/bulk', [EnrollmentController::class, 'bulkStore'])
+                 ->middleware('can:students.create');
+            Route::get('enrollments', [EnrollmentController::class, 'index'])
+                 ->middleware('can:students.view');
+            Route::post('enrollments', [EnrollmentController::class, 'store'])
+                 ->middleware('can:students.create');
+            Route::get('enrollments/{enrollment}', [EnrollmentController::class, 'show'])
+                 ->middleware('can:students.view');
+            Route::post('enrollments/{enrollment}/transfer', [EnrollmentController::class, 'transfer'])
+                 ->middleware('can:students.edit');
+            Route::post('enrollments/{enrollment}/withdraw', [EnrollmentController::class, 'withdraw'])
+                 ->middleware('can:students.edit');
+
+            // ── Élèves par classe (Phase 4) ────────────────────────
+            Route::get('classes/{classe}/students', [EnrollmentController::class, 'byClasse'])
+                 ->middleware('can:students.view');
+
+            // ── Parents (Phase 4) ──────────────────────────────────
+            Route::get('parents', [ParentController::class, 'index'])
+                 ->middleware('can:students.view');
+            Route::post('parents', [ParentController::class, 'store'])
+                 ->middleware('can:students.create');
+            Route::get('parents/{parent}', [ParentController::class, 'show'])
+                 ->middleware('can:students.view');
+            Route::put('parents/{parent}', [ParentController::class, 'update'])
+                 ->middleware('can:students.edit');
+            Route::delete('parents/{parent}', [ParentController::class, 'destroy'])
+                 ->middleware('can:students.delete');
+
+            // ── Enseignants (Phase 5) ───────────────────────────────
+            Route::get('teachers/stats', [TeacherController::class, 'stats'])
+                 ->middleware('can:users.view');
+            Route::get('teachers', [TeacherController::class, 'index'])
+                 ->middleware('can:users.view');
+            Route::post('teachers', [TeacherController::class, 'store'])
+                 ->middleware('can:users.create');
+            Route::get('teachers/{teacher}', [TeacherController::class, 'show'])
+                 ->middleware('can:users.view');
+            Route::put('teachers/{teacher}', [TeacherController::class, 'update'])
+                 ->middleware('can:users.edit');
+            Route::post('teachers/{teacher}/toggle', [TeacherController::class, 'toggle'])
+                 ->middleware('can:users.edit');
+            Route::get('teachers/{teacher}/workload', [TeacherController::class, 'workload'])
+                 ->middleware('can:users.view');
+            Route::get('teachers/{teacher}/subjects', [TeacherController::class, 'subjects'])
+                 ->middleware('can:users.view');
+            Route::put('teachers/{teacher}/subjects', [TeacherController::class, 'syncSubjects'])
+                 ->middleware('can:users.edit');
+            Route::get('teachers/{teacher}/assignments', [TeacherController::class, 'assignments'])
+                 ->middleware('can:users.view');
+
+            // ── Affectations (Phase 5) ──────────────────────────────
+            Route::post('assignments/bulk', [AssignmentController::class, 'bulkStore'])
+                 ->middleware('can:classes.manage');
+            Route::get('assignments', [AssignmentController::class, 'index'])
+                 ->middleware('can:classes.view');
+            Route::post('assignments', [AssignmentController::class, 'store'])
+                 ->middleware('can:classes.manage');
+            Route::put('assignments/{assignment}', [AssignmentController::class, 'update'])
+                 ->middleware('can:classes.manage');
+            Route::delete('assignments/{assignment}', [AssignmentController::class, 'destroy'])
+                 ->middleware('can:classes.manage');
+            Route::post('assignments/{assignment}/unassign', [AssignmentController::class, 'unassign'])
+                 ->middleware('can:classes.manage');
+
+            // ── Affectations par classe (Phase 5) ──────────────────
+            Route::get('classes/{classe}/assignments', [AssignmentController::class, 'byClasse'])
+                 ->middleware('can:classes.view');
+            Route::put('classes/{classe}/main-teacher', [AssignmentController::class, 'setMainTeacher'])
+                 ->middleware('can:classes.manage');
+
+            // ── Évaluations (Phase 6) ───────────────────────────────
+            Route::apiResource('evaluations', EvaluationController::class);
+            Route::post('evaluations/{evaluation}/lock', [EvaluationController::class, 'lock'])
+                 ->middleware('can:grades.validate');
+            Route::post('evaluations/{evaluation}/publish', [EvaluationController::class, 'publish'])
+                 ->middleware('can:grades.validate');
+
+            // ── Notes (Phase 6) ─────────────────────────────────────
+            Route::get('grades/sheet', [GradeController::class, 'sheet'])
+                 ->middleware('can:grades.view');
+            Route::post('grades/bulk', [GradeController::class, 'bulkSave'])
+                 ->middleware('can:grades.input');
+            Route::post('grades/recalculate', [GradeController::class, 'recalculate'])
+                 ->middleware('can:grades.validate');
+            Route::get('grades/student/{student}', [GradeController::class, 'studentSummary'])
+                 ->middleware('can:grades.view');
+            Route::get('grades/class/{classe}', [GradeController::class, 'classSummary'])
+                 ->middleware('can:grades.view');
+            Route::put('grades/{grade}', [GradeController::class, 'saveOne'])
+                 ->middleware('can:grades.input');
+
+            // ── Moyennes (Phase 6) ──────────────────────────────────
+            Route::get('period-averages', [GradeController::class, 'periodAverages'])
+                 ->middleware('can:grades.view');
+
+            // ── Bulletins Scolaires (Phase 7) ────────────────────────
+            // Routes spécifiques avant le apiResource pour éviter les conflits
+            Route::get('report-cards/class-stats', [ReportCardController::class, 'classStats'])
+                 ->middleware('can:report_cards.view');
+            Route::post('report-cards/class', [ReportCardController::class, 'initiateForClass'])
+                 ->middleware('can:report_cards.generate');
+            Route::post('report-cards/generate-class', [ReportCardController::class, 'generateForClass'])
+                 ->middleware('can:report_cards.generate');
+            Route::post('report-cards/publish-class', [ReportCardController::class, 'publishForClass'])
+                 ->middleware('can:report_cards.publish');
+
+            Route::apiResource('report-cards', ReportCardController::class)
+                 ->only(['index', 'store', 'show', 'destroy']);
+            Route::get('report-cards/{reportCard}/preview', [ReportCardController::class, 'preview'])
+                 ->middleware('can:report_cards.view')
+                 ->name('api.report-cards.preview');
+            Route::put('report-cards/{reportCard}/council', [ReportCardController::class, 'updateCouncil'])
+                 ->middleware('can:report_cards.generate');
+            Route::put('report-cards/{reportCard}/appreciations', [ReportCardController::class, 'saveAppreciations'])
+                 ->middleware('can:report_cards.generate');
+            Route::post('report-cards/{reportCard}/generate', [ReportCardController::class, 'generate'])
+                 ->middleware('can:report_cards.generate');
+            Route::get('report-cards/{reportCard}/download', [ReportCardController::class, 'download'])
+                 ->middleware('can:report_cards.view')
+                 ->name('api.report-cards.download');
+            Route::post('report-cards/{reportCard}/publish', [ReportCardController::class, 'publish'])
+                 ->middleware('can:report_cards.publish');
+
+            // ── Créneaux (Phase 8) ────────────────────────────────
+            Route::get('time-slots', [TimeSlotController::class, 'index']);
+            Route::middleware('role:school_admin,director')->group(function (): void {
+                Route::post('time-slots', [TimeSlotController::class, 'store']);
+                Route::put('time-slots/{timeSlot}', [TimeSlotController::class, 'update']);
+                Route::delete('time-slots/{timeSlot}', [TimeSlotController::class, 'destroy']);
+                Route::post('time-slots/{timeSlot}/toggle', [TimeSlotController::class, 'toggle']);
+            });
+
+            // ── Emploi du Temps (Phase 8) ─────────────────────────
+            Route::get('timetable', [TimetableController::class, 'weekView'])
+                 ->middleware('can:timetable.view');
+            Route::get('timetable/pdf', [TimetableController::class, 'downloadPdf'])
+                 ->middleware('can:timetable.view');
+            Route::post('timetable/conflicts', [TimetableController::class, 'checkConflicts'])
+                 ->middleware('can:timetable.view');
+            Route::post('timetable/bulk', [TimetableController::class, 'bulkStore'])
+                 ->middleware('can:timetable.manage');
+            Route::post('timetable', [TimetableController::class, 'store'])
+                 ->middleware('can:timetable.manage');
+            Route::get('timetable/{timetableEntry}', [TimetableController::class, 'show'])
+                 ->middleware('can:timetable.view');
+            Route::put('timetable/{timetableEntry}', [TimetableController::class, 'update'])
+                 ->middleware('can:timetable.manage');
+            Route::delete('timetable/{timetableEntry}', [TimetableController::class, 'destroy'])
+                 ->middleware('can:timetable.manage');
+
+            // Overrides
+            Route::get('timetable/{timetableEntry}/overrides', [TimetableController::class, 'overrides'])
+                 ->middleware('can:timetable.view');
+            Route::post('timetable/{timetableEntry}/overrides', [TimetableController::class, 'storeOverride'])
+                 ->middleware('can:timetable.manage');
+            Route::delete('timetable/overrides/{override}', [TimetableController::class, 'destroyOverride'])
+                 ->middleware('can:timetable.manage');
+
+            // ── Présences & Absences (Phase 9) ────────────────────
+            Route::get('attendance/sheet', [AttendanceController::class, 'sheet'])
+                 ->middleware('can:attendance.view');
+            Route::post('attendance/record', [AttendanceController::class, 'record'])
+                 ->middleware('can:attendance.input');
+
+            Route::get('attendance/student/{enrollment}', [AttendanceController::class, 'studentStats'])
+                 ->middleware('can:attendance.view');
+            Route::get('attendance/student/{enrollment}/history', [AttendanceController::class, 'studentHistory'])
+                 ->middleware('can:attendance.view');
+            Route::get('attendance/class/{classe}', [AttendanceController::class, 'classStats'])
+                 ->middleware('can:attendance.view');
+            Route::get('attendance/class/{classe}/calendar', [AttendanceController::class, 'classCalendar'])
+                 ->middleware('can:attendance.view');
+
+            // Justifications
+            Route::apiResource('justifications', JustificationController::class)
+                 ->only(['index', 'store', 'show', 'destroy']);
+            Route::post('justifications/{justification}/review', [JustificationController::class, 'review'])
+                 ->middleware('can:attendance.reports');
         });
     });
 });

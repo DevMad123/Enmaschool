@@ -20,7 +20,11 @@ import {
   Mail,
   Phone,
   LoaderCircle,
+  AlertTriangle,
+  Copy,
+  Check,
 } from 'lucide-react'
+import { copyToClipboard } from '@/shared/lib/clipboard'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Avatar, AvatarImage, AvatarFallback } from '@/shared/components/ui/avatar'
@@ -28,6 +32,9 @@ import {
   Sheet,
   SheetContent,
 } from '@/shared/components/ui/sheet'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/shared/components/ui/dialog'
 import { DataTable } from '@/shared/components/tables/DataTable'
 import { ConfirmDialog } from '@/shared/components/feedback/ConfirmDialog'
 import {
@@ -79,6 +86,7 @@ const roleColors: Record<GlobalUserRole, string> = {
   staff: 'bg-slate-100 text-slate-700',
   student: 'bg-amber-100 text-amber-700',
   parent: 'bg-pink-100 text-pink-700',
+  superadmin: 'bg-red-100 text-red-700',
 }
 
 const roleLabels: Record<GlobalUserRole, string> = {
@@ -89,6 +97,7 @@ const roleLabels: Record<GlobalUserRole, string> = {
   staff: 'Personnel',
   student: 'Élève',
   parent: 'Parent',
+  superadmin: 'Super Admin',
 }
 
 const statusColors: Record<GlobalUserStatus, string> = {
@@ -135,7 +144,9 @@ function UserDrawer({
   const deactivateMutation = useDeactivateUser()
   const resetPasswordMutation = useResetUserPassword()
   const [confirmDeactivate, setConfirmDeactivate] = useState(false)
-  const [confirmReset, setConfirmReset] = useState(false)
+  const [resetOpen, setResetOpen] = useState(false)
+  const [tempPassword, setTempPassword] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const activities: ActivityLog[] = activityData?.data ?? []
 
@@ -263,21 +274,23 @@ function UserDrawer({
 
             {/* Actions */}
             <div className="flex gap-2 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
-                onClick={() => setConfirmDeactivate(true)}
-                disabled={user.status === 'inactive'}
-              >
-                <UserX className="mr-1.5 h-3.5 w-3.5" />
-                Désactiver
-              </Button>
+              {user.role !== 'superadmin' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+                  onClick={() => setConfirmDeactivate(true)}
+                  disabled={user.status === 'inactive'}
+                >
+                  <UserX className="mr-1.5 h-3.5 w-3.5" />
+                  Désactiver
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
                 className="flex-1"
-                onClick={() => setConfirmReset(true)}
+                onClick={() => { setTempPassword(null); setCopied(false); setResetOpen(true) }}
               >
                 <KeyRound className="mr-1.5 h-3.5 w-3.5" />
                 Reset MDP
@@ -294,28 +307,81 @@ function UserDrawer({
         description={`Voulez-vous vraiment désactiver ${user.full_name} ? Il ne pourra plus se connecter.`}
         confirmLabel="Désactiver"
         onConfirm={() => {
-          deactivateMutation.mutate(user.id, {
-            onSuccess: () => setConfirmDeactivate(false),
-          })
+          deactivateMutation.mutate(
+            { id: user.id, tenant_id: user.tenant_id },
+            { onSuccess: () => setConfirmDeactivate(false) },
+          )
         }}
         isLoading={deactivateMutation.isPending}
         variant="danger"
       />
 
-      <ConfirmDialog
-        open={confirmReset}
-        onOpenChange={setConfirmReset}
-        title="Réinitialiser le mot de passe"
-        description={`Un email de réinitialisation sera envoyé à ${user.email}.`}
-        confirmLabel="Réinitialiser"
-        onConfirm={() => {
-          resetPasswordMutation.mutate(user.id, {
-            onSuccess: () => setConfirmReset(false),
-          })
-        }}
-        isLoading={resetPasswordMutation.isPending}
-        variant="warning"
-      />
+      <Dialog open={resetOpen} onOpenChange={(v) => { if (!v) { setResetOpen(false); setTempPassword(null); setCopied(false) } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Réinitialiser le mot de passe</DialogTitle>
+          </DialogHeader>
+
+          {!tempPassword ? (
+            <>
+              <p className="text-sm text-gray-600 py-2">
+                Réinitialiser le mot de passe de{' '}
+                <span className="font-semibold">{user.full_name}</span> ?
+                Un mot de passe temporaire sera généré.
+              </p>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setResetOpen(false)}>Annuler</Button>
+                <Button
+                  variant="destructive"
+                  disabled={resetPasswordMutation.isPending}
+                  onClick={async () => {
+                    try {
+                      const res = await resetPasswordMutation.mutateAsync(
+                        { id: user.id, tenant_id: user.tenant_id ?? '' },
+                      )
+                      setTempPassword(res.data?.temporary_password ?? null)
+                    } catch { /* handled by hook */ }
+                  }}
+                >
+                  {resetPasswordMutation.isPending ? 'Génération…' : 'Réinitialiser'}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <div className="space-y-4 py-2">
+              <div className="flex items-start gap-3 rounded-lg bg-amber-50 p-3 border border-amber-200">
+                <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+                <p className="text-sm font-medium text-amber-800">Mot de passe temporaire généré</p>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <code className="flex-1 text-center text-lg font-mono font-semibold tracking-widest text-gray-900">
+                  {tempPassword}
+                </code>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try { await copyToClipboard(tempPassword) } catch { /* silent */ }
+                    setCopied(true)
+                    setTimeout(() => setCopied(false), 2000)
+                  }}
+                  className="shrink-0 rounded-md p-1.5 text-gray-500 hover:bg-gray-200 transition-colors"
+                  title="Copier"
+                >
+                  {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                Communiquez ce mot de passe à l'utilisateur. Il ne sera plus visible après fermeture.
+              </p>
+              <DialogFooter>
+                <Button onClick={() => { setResetOpen(false); setTempPassword(null); setCopied(false) }}>
+                  J'ai noté, Fermer
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
@@ -506,7 +572,7 @@ export function GlobalUsersPage() {
             Utilisateurs globaux
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Tous les utilisateurs de toutes les écoles
+            Tous les utilisateurs de toutes les écoles et les super admins
           </p>
         </div>
         <Button

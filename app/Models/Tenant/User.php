@@ -9,6 +9,7 @@ use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -101,5 +102,19 @@ class User extends Authenticatable
     public function hasModulePermission(string $module, string $action): bool
     {
         return $this->can("{$module}.{$action}");
+    }
+
+    // ── Relations ─────────────────────────────────────────────
+
+    public function teacherProfile(): HasOne
+    {
+        return $this->hasOne(Teacher::class);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────
+
+    public function isTeacher(): bool
+    {
+        return $this->role === UserRole::Teacher;
     }
 }

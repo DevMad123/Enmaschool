@@ -1,17 +1,25 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, BookOpen, Users, Clock } from 'lucide-react'
+import { ArrowLeft, BookOpen, Users, Clock, UserCheck, Plus, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner'
 import { useClasse, useClasseSubjects } from '../hooks/useClasses'
 import { LevelCategoryBadge } from '../components/LevelCategoryBadge'
+import { ClassAssignmentsTab } from './ClassAssignmentsTab'
+import { useSchoolStore } from '../store/schoolStore'
+import { useTimeSlots, useTimetableWeekView, useDeleteTimetableEntry } from '../hooks/useTimetable'
+import { AddTimetableEntryModal } from './AddTimetableEntryModal'
+import type { TimetableEntry, DayOfWeek } from '../types/timetable.types'
+import { DAY_LABELS } from '../types/timetable.types'
+import { formatSlotRange, WORKING_DAYS } from '../lib/timetableHelpers'
 import type { Subject } from '../types/school.types'
 
-type Tab = 'info' | 'subjects' | 'students' | 'timetable'
+type Tab = 'info' | 'subjects' | 'assignments' | 'students' | 'timetable'
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'info', label: 'Informations', icon: BookOpen },
   { id: 'subjects', label: 'Matières', icon: BookOpen },
+  { id: 'assignments', label: 'Affectations', icon: UserCheck },
   { id: 'students', label: 'Élèves', icon: Users },
   { id: 'timetable', label: 'Emploi du temps', icon: Clock },
 ]
@@ -131,6 +139,138 @@ function TabPlaceholder({ label }: { label: string }) {
   )
 }
 
+function ClassTimetableTab({ classeId }: { classeId: number }) {
+  const { currentYearId } = useSchoolStore()
+  const yearId = currentYearId ?? 0
+
+  const [addOpen,      setAddOpen]      = useState(false)
+  const [editingEntry, setEditingEntry] = useState<TimetableEntry | null>(null)
+  const [defaultDay,   setDefaultDay]   = useState<DayOfWeek>(1)
+
+  const { data: allSlots }   = useTimeSlots({ active_only: true })
+  const slots                = allSlots ?? []
+  const mondaySlots          = slots.filter((s) => s.day_of_week.value === 1).sort((a, b) => a.order - b.order)
+
+  const { data: weekViewData, isLoading } = useTimetableWeekView({
+    year_id:  yearId,
+    class_id: classeId,
+  })
+
+  const deleteMutation = useDeleteTimetableEntry()
+
+  const getEntry = (day: DayOfWeek, templateSlotId: number): TimetableEntry | undefined => {
+    if (!weekViewData) return undefined
+    const dayEntries: TimetableEntry[] = (weekViewData.entries as Record<string, TimetableEntry[]>)[String(day)] ?? []
+    const templateOrder = mondaySlots.find((ms) => ms.id === templateSlotId)?.order
+    const daySlots = slots.filter((s) => s.day_of_week.value === day)
+    const correspondingSlot = daySlots.find((s) => s.order === templateOrder)
+    if (!correspondingSlot) return undefined
+    return dayEntries.find((e) => e.time_slot_id === correspondingSlot.id)
+  }
+
+  if (!yearId) {
+    return (
+      <div className="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-12 text-center">
+        <p className="text-sm text-slate-500">Aucune année scolaire active.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button size="sm" onClick={() => { setEditingEntry(null); setAddOpen(true) }} className="gap-1.5">
+          <Plus className="h-4 w-4" /> Ajouter un cours
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-10"><LoadingSpinner /></div>
+      ) : (
+        <div className="rounded-lg border border-slate-200 bg-white overflow-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-slate-50">
+                <th className="border border-slate-200 px-3 py-2 text-left text-xs font-medium text-slate-500 w-28">Créneau</th>
+                {WORKING_DAYS.map((day) => (
+                  <th key={day} className="border border-slate-200 px-3 py-2 text-center text-xs font-medium text-slate-700 min-w-[130px]">
+                    {DAY_LABELS[day]}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {mondaySlots.map((tslot) => (
+                <tr key={tslot.id} className={tslot.is_break ? 'bg-amber-50' : ''}>
+                  <td className="border border-slate-200 px-3 py-2 text-xs text-slate-500 whitespace-nowrap">
+                    <div className="font-medium text-slate-700">{tslot.name}</div>
+                    <div className="text-slate-400">{formatSlotRange(tslot)}</div>
+                  </td>
+                  {WORKING_DAYS.map((day) => {
+                    if (tslot.is_break) {
+                      return (
+                        <td key={day} className="border border-slate-200 px-2 py-1 text-center text-xs text-amber-600 italic">
+                          {day === 1 ? tslot.name : ''}
+                        </td>
+                      )
+                    }
+                    const entry = getEntry(day, tslot.id)
+                    return (
+                      <td
+                        key={day}
+                        className="border border-slate-200 px-2 py-1 align-top cursor-pointer"
+                        onClick={() => {
+                          if (entry) { setEditingEntry(entry); setAddOpen(true) }
+                          else { setEditingEntry(null); setDefaultDay(day); setAddOpen(true) }
+                        }}
+                      >
+                        {entry ? (
+                          <div
+                            className="group relative rounded px-2 py-1 text-xs min-h-[48px]"
+                            style={{ backgroundColor: (entry.color ?? '#6366F1') + '22', borderLeft: `3px solid ${entry.color ?? '#6366F1'}` }}
+                          >
+                            <div className="font-semibold truncate" style={{ color: entry.color ?? '#6366F1' }}>
+                              {entry.subject?.name ?? '—'}
+                            </div>
+                            {entry.teacher && <div className="text-slate-500 truncate">{entry.teacher.full_name}</div>}
+                            <div className="absolute top-1 right-1 hidden group-hover:flex gap-0.5">
+                              <button onClick={(e) => { e.stopPropagation(); setEditingEntry(entry); setAddOpen(true) }}
+                                className="rounded p-0.5 bg-white shadow hover:bg-slate-100">
+                                <Pencil className="h-3 w-3 text-slate-600" />
+                              </button>
+                              <button onClick={(e) => { e.stopPropagation(); if (confirm('Supprimer ?')) deleteMutation.mutate(entry.id) }}
+                                className="rounded p-0.5 bg-white shadow hover:bg-red-50">
+                                <Trash2 className="h-3 w-3 text-red-500" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="h-full min-h-[48px] flex items-center justify-center text-slate-200 hover:text-slate-400 transition-colors">
+                            <Plus className="h-4 w-4" />
+                          </div>
+                        )}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <AddTimetableEntryModal
+        open={addOpen}
+        onClose={() => { setAddOpen(false); setEditingEntry(null) }}
+        academicYearId={yearId}
+        defaultClassId={classeId}
+        defaultDayOfWeek={defaultDay}
+        editingEntry={editingEntry}
+      />
+    </div>
+  )
+}
+
 export function ClasseDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [activeTab, setActiveTab] = useState<Tab>('info')
@@ -194,8 +334,9 @@ export function ClasseDetailPage() {
       {/* Tab content */}
       {activeTab === 'info' && <TabInfo classe={classe} />}
       {activeTab === 'subjects' && <TabSubjects classeId={classe.id} />}
+      {activeTab === 'assignments' && <ClassAssignmentsTab classeId={classe.id} />}
       {activeTab === 'students' && <TabPlaceholder label="Phase 4" />}
-      {activeTab === 'timetable' && <TabPlaceholder label="Phase 8" />}
+      {activeTab === 'timetable' && <ClassTimetableTab classeId={classe.id} />}
     </div>
   )
 }

@@ -68,22 +68,22 @@ class ClasseService
         }
 
         return DB::transaction(function () use ($data, $level, $serie): Collection {
-            $classes = collect();
+            $ids = [];
 
             foreach ($data['sections'] as $section) {
-                $classe = new Classe([
+                $classe = Classe::create([
                     'academic_year_id' => $data['academic_year_id'],
                     'school_level_id' => $data['school_level_id'],
                     'serie' => $serie,
                     'section' => $section,
                     'capacity' => $data['capacity'] ?? 40,
                 ]);
-                $classe->setRelation('level', $level);
-                $classe->save();
-                $classes->push($classe);
+                $ids[] = $classe->id;
             }
 
-            return $classes->load(['level', 'mainTeacher', 'room']);
+            return Classe::with(['level', 'mainTeacher', 'room'])
+                ->whereIn('id', $ids)
+                ->get();
         });
     }
 

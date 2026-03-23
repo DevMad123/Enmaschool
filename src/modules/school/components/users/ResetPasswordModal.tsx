@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AlertTriangle, Copy, Check } from 'lucide-react'
+import { copyToClipboard } from '@/shared/lib/clipboard'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/shared/components/ui/dialog'
@@ -31,7 +32,7 @@ export function ResetPasswordModal({ open, onOpenChange, user }: ResetPasswordMo
 
   const handleCopy = async () => {
     if (!tempPassword) return
-    await navigator.clipboard.writeText(tempPassword)
+    try { await copyToClipboard(tempPassword) } catch { /* silent */ }
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

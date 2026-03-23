@@ -28,7 +28,7 @@ const CATEGORY_VALUES = CATEGORY_OPTIONS.map((c) => c.value) as [SubjectCategory
 const subjectSchema = z.object({
   name: z.string().min(1, 'Nom requis'),
   code: z.string().min(1, 'Code requis'),
-  coefficient: z.number().min(0.1).max(99.9).optional(),
+  coefficient: z.number().int('Le coefficient doit être un entier').min(1).max(20).optional(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Couleur invalide').optional(),
   category: z.enum(CATEGORY_VALUES).nullable().optional(),
 })
@@ -166,7 +166,7 @@ export function SubjectsPage() {
               </div>
               <div className="space-y-1.5">
                 <Label>Coefficient</Label>
-                <Input type="number" step="0.5" min={0.1} {...form.register('coefficient', { valueAsNumber: true })} />
+                <Input type="number" step="1" min={1} max={20} {...form.register('coefficient', { valueAsNumber: true })} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">

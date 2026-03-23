@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Plus, Copy, Search, Users, DoorOpen, GraduationCap } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
@@ -30,8 +30,13 @@ function ClasseCard({
   onEdit: (c: Classe) => void
   onDelete: (c: Classe) => void
 }) {
+  const navigate = useNavigate()
+
   return (
-    <div className="group relative rounded-lg border border-slate-200 bg-white p-4 hover:shadow-md transition-shadow">
+    <div
+      className="group relative rounded-lg border border-slate-200 bg-white p-4 hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => navigate(`/school/classes/${classe.id}`)}
+    >
       <div className="flex items-start justify-between mb-3">
         <div>
           <h3 className="text-lg font-bold text-slate-900">{classe.display_name}</h3>
@@ -69,20 +74,14 @@ function ClasseCard({
       </div>
 
       <div className="mt-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Link
-          to={`/school/classes/${classe.id}`}
-          className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
-        >
-          Voir
-        </Link>
         <button
-          onClick={() => onEdit(classe)}
+          onClick={(e) => { e.stopPropagation(); onEdit(classe) }}
           className="text-xs font-medium text-slate-600 hover:text-slate-800"
         >
           Modifier
         </button>
         <button
-          onClick={() => onDelete(classe)}
+          onClick={(e) => { e.stopPropagation(); onDelete(classe) }}
           className="text-xs font-medium text-red-600 hover:text-red-700"
         >
           Supprimer

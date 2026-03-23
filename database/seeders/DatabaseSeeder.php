@@ -153,6 +153,9 @@ class DatabaseSeeder extends Seeder
 
             // Permissions Spatie (Phase 3)
             (new PermissionSeeder())->run();
+
+            // Créneaux horaires (Phase 8)
+            (new TimeSlotSeeder())->run();
         });
 
         // -----------------------------------------------------------------

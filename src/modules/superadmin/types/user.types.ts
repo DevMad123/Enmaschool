@@ -8,12 +8,13 @@ export type GlobalUserRole =
   | 'staff'
   | 'student'
   | 'parent'
+  | 'superadmin'
 
 export type GlobalUserStatus = 'active' | 'inactive' | 'suspended'
 
 export interface GlobalUser {
   id: number
-  tenant_id: string
+  tenant_id: string | null
   tenant_name: string
   first_name: string
   last_name: string

@@ -73,21 +73,28 @@ export function UsersPage() {
     per_page: pagination.pageSize,
   })
 
-  const deleteMutation  = useDeleteUser()
-  const activateMutation = useActivateUser()
+  // Counts per role — independent queries so they stay accurate when filtering
+  const { data: adminData }      = useUsers({ role: 'school_admin', per_page: 1 })
+  const { data: directorData }   = useUsers({ role: 'director',     per_page: 1 })
+  const { data: teacherData }    = useUsers({ role: 'teacher',      per_page: 1 })
+  const { data: accountantData } = useUsers({ role: 'accountant',   per_page: 1 })
+  const { data: staffData }      = useUsers({ role: 'staff',        per_page: 1 })
+
+  const roleCounts: Record<string, number> = {
+    school_admin: adminData?.meta?.total      ?? 0,
+    director:     directorData?.meta?.total   ?? 0,
+    teacher:      teacherData?.meta?.total    ?? 0,
+    accountant:   accountantData?.meta?.total ?? 0,
+    staff:        staffData?.meta?.total      ?? 0,
+  }
+
+  const deleteMutation     = useDeleteUser()
+  const activateMutation   = useActivateUser()
   const deactivateMutation = useDeactivateUser()
-  const suspendMutation = useSuspendUser()
+  const suspendMutation    = useSuspendUser()
 
-  const users      = data?.data ?? []
-  const pageCount  = data?.meta?.last_page ?? 1
-
-  // Count per role tab
-  const roleCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    for (const r of STAFF_ROLES) counts[r] = 0
-    for (const u of users) counts[u.role.value] = (counts[u.role.value] ?? 0) + 1
-    return counts
-  }, [users])
+  const users     = data?.data ?? []
+  const pageCount = data?.meta?.last_page ?? 1
 
   const columns: ColumnDef<SchoolUser, unknown>[] = useMemo(() => [
     {

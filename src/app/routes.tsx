@@ -31,6 +31,27 @@ import { ClasseDetailPage } from '@/modules/school/pages/ClasseDetailPage';
 import { SubjectsPage } from '@/modules/school/pages/SubjectsPage';
 import { RoomsPage } from '@/modules/school/pages/RoomsPage';
 
+// ── School module pages (Phase 4) ────────────────────────────────────
+import { StudentsPage } from '@/modules/school/pages/StudentsPage';
+import { StudentDetailPage } from '@/modules/school/pages/StudentDetailPage';
+
+// ── School module pages (Phase 5) ────────────────────────────────────
+import { TeachersPage } from '@/modules/school/pages/TeachersPage';
+import { TeacherDetailPage } from '@/modules/school/pages/TeacherDetailPage';
+
+// ── School module pages (Phase 6) ────────────────────────────────────
+import { GradesPage } from '@/modules/school/pages/GradesPage';
+import { GradesSheetPage } from '@/modules/school/pages/GradesSheetPage';
+import { StudentGradesSummaryPage } from '@/modules/school/pages/StudentGradesSummaryPage';
+import { ClassGradesSummaryPage } from '@/modules/school/pages/ClassGradesSummaryPage';
+
+// ── School module pages (Phase 7) ────────────────────────────────────
+import { ReportCardsPage } from '@/modules/school/pages/ReportCardsPage';
+import { ReportCardEditorPage } from '@/modules/school/pages/ReportCardEditorPage';
+
+// ── School module pages (Phase 8) ────────────────────────────────────
+import { TimetablePage } from '@/modules/school/pages/TimetablePage';
+
 // ── School module pages (Phase 3) ────────────────────────────────────
 import { UsersPage } from '@/modules/school/pages/users/UsersPage';
 import { UserDetailPage } from '@/modules/school/pages/users/UserDetailPage';
@@ -320,6 +341,104 @@ export const routes: RouteObject[] = [
         element: (
           <RoleRoute roles={['school_admin', 'director']}>
             <RoomsPage />
+          </RoleRoute>
+        ),
+      },
+
+      // ── Élèves (Phase 4) ─────────────────────────────────────────────
+      {
+        path: 'school/students',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <StudentsPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/students/:id',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <StudentDetailPage />
+          </RoleRoute>
+        ),
+      },
+
+      // ── Enseignants (Phase 5) ────────────────────────────────────────
+      {
+        path: 'school/teachers',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <TeachersPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/teachers/:id',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <TeacherDetailPage />
+          </RoleRoute>
+        ),
+      },
+
+      // ── Notes (Phase 6) ──────────────────────────────────────────────
+      {
+        path: 'school/grades',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <GradesPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/grades/sheet',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <GradesSheetPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/students/:id/grades',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <StudentGradesSummaryPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/classes/:id/grades',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <ClassGradesSummaryPage />
+          </RoleRoute>
+        ),
+      },
+
+      // ── Bulletins Scolaires (Phase 7) ───────────────────────────────
+      {
+        path: 'school/report-cards',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <ReportCardsPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/report-cards/:id/edit',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <ReportCardEditorPage />
+          </RoleRoute>
+        ),
+      },
+
+      // ── Emploi du Temps (Phase 8) ───────────────────────────────────
+      {
+        path: 'school/timetable',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <TimetablePage />
           </RoleRoute>
         ),
       },

@@ -45,7 +45,7 @@ class AcademicYearService
                 ]);
             }
 
-            return $year->load('periods');
+            return $year->fresh()->load('periods');
         });
     }
 

@@ -72,6 +72,51 @@ export const navigation: NavItem[] = [
     roles: ['school_admin', 'director'],
   },
 
+  // ── Élèves (Phase 4) ─────────────────────────────────────────────────
+  {
+    label: 'Élèves',
+    path: '/school/students',
+    icon: 'GraduationCap',
+    module: 'students',
+    roles: ['school_admin', 'director', 'teacher'],
+  },
+
+  // ── Enseignants (Phase 5) ─────────────────────────────────────────────
+  {
+    label: 'Enseignants',
+    path: '/school/teachers',
+    icon: 'GraduationCap',
+    module: 'users',
+    roles: ['school_admin', 'director', 'teacher'],
+  },
+
+  // ── Notes (Phase 6) ──────────────────────────────────────────────────
+  {
+    label: 'Notes',
+    path: '/school/grades',
+    icon: 'ClipboardList',
+    module: 'school',
+    roles: ['school_admin', 'director', 'teacher'],
+  },
+
+  // ── Bulletins (Phase 7) ───────────────────────────────────────────────
+  {
+    label: 'Bulletins',
+    path: '/school/report-cards',
+    icon: 'FileText',
+    module: 'school',
+    roles: ['school_admin', 'director', 'teacher'],
+  },
+
+  // ── Emploi du Temps (Phase 8) ─────────────────────────────────────────
+  {
+    label: 'Emploi du temps',
+    path: '/school/timetable',
+    icon: 'CalendarRange',
+    module: 'school',
+    roles: ['school_admin', 'director', 'teacher'],
+  },
+
   // ── Rôles & Utilisateurs (Phase 3) ───────────────────────────────────
   {
     label: 'Utilisateurs',

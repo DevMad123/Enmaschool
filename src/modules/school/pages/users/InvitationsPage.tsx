@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { type ColumnDef, type PaginationState } from '@tanstack/react-table'
 import { MailPlus, Copy, RotateCcw, XCircle, Check } from 'lucide-react'
+import { copyToClipboard } from '@/shared/lib/clipboard'
 import { Button } from '@/shared/components/ui/button'
 import { DataTable } from '@/shared/components/tables/DataTable'
 import { EmptyState } from '@/shared/components/feedback/EmptyState'
@@ -39,7 +40,7 @@ export function InvitationsPage() {
 
   const handleCopy = async (invitation: UserInvitation) => {
     if (!invitation.invitation_link) return
-    await navigator.clipboard.writeText(invitation.invitation_link)
+    try { await copyToClipboard(invitation.invitation_link) } catch { /* silent */ }
     setCopiedId(invitation.id)
     setTimeout(() => setCopiedId(null), 2000)
   }

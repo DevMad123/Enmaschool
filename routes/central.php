@@ -95,5 +95,11 @@ Route::middleware(['auth:sanctum'])->prefix('central')->group(function (): void 
     Route::post('/settings/test-smtp', [SystemSettingController::class, 'testSmtp']);
 
     // ---- Utilisateurs globaux -----------------------------------------------
-    Route::get('/users', [GlobalUserController::class, 'index']);
+    Route::get('/users',                               [GlobalUserController::class, 'index']);
+    Route::get('/users/export',                        [GlobalUserController::class, 'export']);
+    Route::post('/users/bulk-deactivate',              [GlobalUserController::class, 'bulkDeactivate']);
+    Route::get('/users/{id}',                          [GlobalUserController::class, 'show']);
+    Route::get('/users/{id}/activity',                 [GlobalUserController::class, 'activity']);
+    Route::post('/users/{id}/deactivate',              [GlobalUserController::class, 'deactivate']);
+    Route::post('/users/{id}/reset-password',          [GlobalUserController::class, 'resetPassword']);
 });

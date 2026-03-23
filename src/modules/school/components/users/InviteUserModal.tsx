@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Check, Copy } from 'lucide-react'
+import { copyToClipboard } from '@/shared/lib/clipboard'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/shared/components/ui/dialog'
@@ -49,7 +50,7 @@ export function InviteUserModal({ open, onOpenChange }: InviteUserModalProps) {
 
   const handleCopy = async () => {
     if (!invitation?.invitation_link) return
-    await navigator.clipboard.writeText(invitation.invitation_link)
+    try { await copyToClipboard(invitation.invitation_link) } catch { /* silent */ }
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -115,7 +116,7 @@ export function InviteUserModal({ open, onOpenChange }: InviteUserModalProps) {
                 <p className="mb-2 text-xs font-medium text-gray-600">
                   Lien d'invitation (valable 72h) :
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <code className="flex-1 truncate rounded bg-white px-2 py-1 text-xs text-gray-800 border border-gray-200">
                     {invitation.invitation_link}
                   </code>

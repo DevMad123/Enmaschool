@@ -48,7 +48,7 @@ export function ClasseFormModal({ open, onOpenChange, classe }: ClasseFormModalP
   const createMutation = useCreateClasse()
   const updateMutation = useUpdateClasse()
 
-  const levels = levelsData?.data ?? []
+  const levels = (levelsData?.data ?? []).filter((l) => l.is_active)
   const years = yearsData?.data ?? []
 
   const form = useForm<FormValues>({

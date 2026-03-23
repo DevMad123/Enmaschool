@@ -10,6 +10,11 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 trait ApiResponse
 {
+    protected function created(mixed $data = null, string $message = ''): JsonResponse
+    {
+        return $this->success($data, $message, 201);
+    }
+
     protected function success(mixed $data = null, string $message = '', int $code = 200): JsonResponse
     {
         return response()->json([

@@ -43,7 +43,8 @@ api.interceptors.response.use(
     const { status, data } = error.response;
     const code: string | undefined = data?.code;
 
-    if (status === 401) {
+    const isLoginEndpoint = error.config?.url?.includes('/auth/login')
+    if (status === 401 && !isLoginEndpoint) {
       useAuthStore.getState().clearAuth();
       const isAdminRoute = window.location.pathname.startsWith('/admin');
       window.location.href = isAdminRoute ? '/admin/login' : '/login';

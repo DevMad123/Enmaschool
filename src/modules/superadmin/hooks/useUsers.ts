@@ -54,7 +54,7 @@ export function useDeactivateUser() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: number) => deactivateUser(id),
+    mutationFn: (params: { id: number; tenant_id: string }) => deactivateUser(params),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: userKeys.lists() })
       toast.success('Utilisateur désactivé')
@@ -84,10 +84,9 @@ export function useResetUserPassword() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: number) => resetUserPassword(id),
+    mutationFn: (params: { id: number; tenant_id: string | null }) => resetUserPassword(params),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: userKeys.lists() })
-      toast.success('Mot de passe réinitialisé. Un email a été envoyé.')
     },
     onError: (error: ApiError) => {
       toast.error(error.message)

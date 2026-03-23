@@ -34,10 +34,11 @@ export async function getUserActivity(
 }
 
 export async function deactivateUser(
-  id: number,
+  params: { id: number; tenant_id: string },
 ): Promise<ApiSuccess<GlobalUser>> {
   const { data } = await api.post<ApiSuccess<GlobalUser>>(
-    `/central/users/${id}/deactivate`,
+    `/central/users/${params.id}/deactivate`,
+    { tenant_id: params.tenant_id },
   )
   return data
 }
@@ -53,10 +54,11 @@ export async function deactivateUsers(
 }
 
 export async function resetUserPassword(
-  id: number,
-): Promise<ApiSuccess<null>> {
-  const { data } = await api.post<ApiSuccess<null>>(
-    `/central/users/${id}/reset-password`,
+  params: { id: number; tenant_id: string | null },
+): Promise<ApiSuccess<{ temporary_password: string }>> {
+  const { data } = await api.post<ApiSuccess<{ temporary_password: string }>>(
+    `/central/users/${params.id}/reset-password`,
+    { tenant_id: params.tenant_id },
   )
   return data
 }

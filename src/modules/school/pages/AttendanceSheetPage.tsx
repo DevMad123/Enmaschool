@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { ClipboardCheck, Users, CheckCheck, RotateCcw, Save } from 'lucide-react'
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
+import { ClipboardCheck, Users, CheckCheck, RotateCcw, Save, BarChart2, FileText } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner'
 import { useSchoolStore } from '../store/schoolStore'
 import { useAcademicYears } from '../hooks/useAcademicYears'
 import { useClasses } from '../hooks/useClasses'
-import { useTimeSlots } from '../hooks/useTimetable'
+import { useTimetableWeekView } from '../hooks/useTimetable'
 import { useAttendanceSheet, useRecordAttendance } from '../hooks/useAttendance'
 import { AttendanceStatusButton } from '../components/AttendanceStatusButton'
 import { AttendanceSummaryBar } from '../components/AttendanceSummaryBar'
@@ -18,6 +18,8 @@ import { WORKING_DAYS, formatSlotRange } from '../lib/timetableHelpers'
 const ALL_STATUSES: AttendanceStatus[] = ['present', 'absent', 'late', 'excused']
 
 export function AttendanceSheetPage() {
+  const navigate         = useNavigate()
+  const { pathname }     = useLocation()
   const { currentYearId } = useSchoolStore()
   const [searchParams]   = useSearchParams()
 
@@ -31,7 +33,8 @@ export function AttendanceSheetPage() {
   const [focusedRow,   setFocusedRow]   = useState<number>(-1)
   const [saveStatus,   setSaveStatus]   = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const triggerSaveRef  = useRef<() => void>(() => {})
 
   useEffect(() => {
     if (currentYearId && selectedYearId === null) setSelectedYearId(currentYearId)
@@ -54,13 +57,14 @@ export function AttendanceSheetPage() {
   const { data: classesData } = useClasses({ academic_year_id: yearId || undefined })
   const classes               = classesData?.data ?? []
 
-  // Time slots for the selected date's day
-  const { data: slotsData }   = useTimeSlots({ active_only: true, no_breaks: true })
-  const allSlots              = slotsData ?? []
-  const dateDay               = selectedDate ? new Date(selectedDate).getDay() : 0
-  // Convert JS day (0=Sun) to ISO day (1=Mon … 6=Sat)
-  const isoDay                = dateDay === 0 ? 7 : dateDay
-  const daySlots              = allSlots.filter((s) => s.day_of_week.value === isoDay)
+  // Timetable entries for the selected class and date's day
+  const { data: weekViewData } = useTimetableWeekView({
+    class_id: selectedClassId || undefined,
+    year_id:  selectedYearId  || undefined,
+  })
+  const dateDay    = selectedDate ? new Date(selectedDate).getDay() : 0
+  const isoDay     = String(dateDay === 0 ? 7 : dateDay)
+  const dayEntries = weekViewData?.entries?.[isoDay] ?? []
 
   const { data: sheet, isLoading } = useAttendanceSheet(
     selectedEntryId ?? undefined,
@@ -88,14 +92,6 @@ export function AttendanceSheetPage() {
     setSaveStatus('idle')
   }, [sheet])
 
-  const scheduleAutoSave = useCallback(() => {
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-    setSaveStatus('saving')
-    saveTimerRef.current = setTimeout(() => {
-      triggerSave()
-    }, 800)
-  }, [selectedEntryId, selectedClassId, selectedDate, localRecords])
-
   const triggerSave = useCallback(() => {
     if (!selectedClassId || !selectedDate || localRecords.size === 0) return
 
@@ -112,6 +108,17 @@ export function AttendanceSheetPage() {
       }
     )
   }, [selectedEntryId, selectedClassId, selectedDate, localRecords, recordMutation])
+
+  // Always point to the latest triggerSave (fixes stale-closure in setTimeout)
+  triggerSaveRef.current = triggerSave
+
+  const scheduleAutoSave = useCallback(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    setSaveStatus('saving')
+    saveTimerRef.current = setTimeout(() => {
+      triggerSaveRef.current()
+    }, 800)
+  }, []) // no deps needed — always calls latest via ref
 
   const setStatus = (enrollmentId: number, status: AttendanceStatus) => {
     setLocalRecords((prev) => {
@@ -196,6 +203,12 @@ export function AttendanceSheetPage() {
     attendance_rate: liveRate,
   }
 
+  const TABS = [
+    { id: 'sheet',          path: '/school/attendance/sheet',          label: "Feuille d'appel", Icon: ClipboardCheck },
+    { id: 'stats',          path: '/school/attendance',                label: 'Statistiques',     Icon: BarChart2 },
+    { id: 'justifications', path: '/school/attendance/justifications', label: 'Justifications',   Icon: FileText },
+  ]
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -226,6 +239,24 @@ export function AttendanceSheetPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 rounded-lg border border-slate-200 bg-white p-1 w-fit">
+        {TABS.map(({ id, path, label, Icon }) => (
+          <button
+            key={id}
+            onClick={() => navigate(path)}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              pathname === path || (id === 'sheet' && pathname.startsWith('/school/attendance/sheet'))
+                ? 'bg-indigo-600 text-white'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* Filters */}
       <div className="flex flex-wrap gap-3 rounded-lg border border-slate-200 bg-white p-4">
         <div className="flex flex-col gap-1">
@@ -243,7 +274,7 @@ export function AttendanceSheetPage() {
           <label className="text-xs font-medium text-slate-500">Classe</label>
           <select
             value={selectedClassId}
-            onChange={(e) => setSelectedClassId(Number(e.target.value))}
+            onChange={(e) => { setSelectedClassId(Number(e.target.value)); setSelectedEntryId(null) }}
             className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm min-w-[180px]"
           >
             <option value={0}>Sélectionner</option>
@@ -256,22 +287,24 @@ export function AttendanceSheetPage() {
             type="date"
             value={selectedDate}
             max={new Date().toISOString().slice(0, 10)}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            onChange={(e) => { setSelectedDate(e.target.value); setSelectedEntryId(null) }}
             className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
           />
         </div>
-        {daySlots.length > 0 && (
+        {selectedClassId > 0 && (
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-slate-500">Cours</label>
+            <label className="text-xs font-medium text-slate-500">
+              Cours <span className="text-red-500">*</span>
+            </label>
             <select
               value={selectedEntryId ?? ''}
               onChange={(e) => setSelectedEntryId(Number(e.target.value) || null)}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm min-w-[200px]"
+              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm min-w-[220px]"
             >
-              <option value="">Journée entière</option>
-              {daySlots.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} — {formatSlotRange(s)}
+              <option value="">Sélectionner un cours…</option>
+              {dayEntries.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.subject?.name ?? '—'}{entry.time_slot ? ` — ${formatSlotRange(entry.time_slot)}` : ''}
                 </option>
               ))}
             </select>
@@ -284,6 +317,11 @@ export function AttendanceSheetPage() {
         <div className="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-16 text-center">
           <ClipboardCheck className="h-10 w-10 text-slate-300 mx-auto mb-3" />
           <p className="text-sm text-slate-500">Sélectionnez une classe et une date pour afficher la feuille d'appel.</p>
+        </div>
+      ) : !selectedEntryId ? (
+        <div className="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-16 text-center">
+          <ClipboardCheck className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+          <p className="text-sm text-slate-500">Sélectionnez un cours pour afficher la feuille d'appel.</p>
         </div>
       ) : isLoading ? (
         <div className="flex justify-center py-20">

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { FileText, Check, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { FileText, Check, X, ClipboardCheck, BarChart2 } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner'
 import { useJustifications, useReviewJustification, useDeleteJustification } from '../hooks/useAttendance'
@@ -9,6 +10,7 @@ import type { AbsenceJustification, JustificationStatus } from '../types/attenda
 type StatusFilter = 'all' | JustificationStatus
 
 export function JustificationsPage() {
+  const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [reviewingId,  setReviewingId]  = useState<number | null>(null)
   const [rejectNote,   setRejectNote]   = useState('')
@@ -41,6 +43,12 @@ export function JustificationsPage() {
     { label: 'Rejetées',    value: 'rejected' },
   ]
 
+  const TABS = [
+    { path: '/school/attendance/sheet',          label: "Feuille d'appel", Icon: ClipboardCheck },
+    { path: '/school/attendance',                label: 'Statistiques',     Icon: BarChart2 },
+    { path: '/school/attendance/justifications', label: 'Justifications',   Icon: FileText },
+  ]
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -52,6 +60,24 @@ export function JustificationsPage() {
           <h1 className="text-xl font-bold text-slate-900">Justifications d'absence</h1>
           <p className="text-sm text-slate-500">Validation des justificatifs soumis</p>
         </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 rounded-lg border border-slate-200 bg-white p-1 w-fit">
+        {TABS.map(({ path, label, Icon }) => (
+          <button
+            key={path}
+            onClick={() => navigate(path)}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              path === '/school/attendance/justifications'
+                ? 'bg-indigo-600 text-white'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* Filter tabs */}

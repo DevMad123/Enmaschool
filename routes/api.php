@@ -88,6 +88,8 @@ Route::middleware([
 
                 // School Levels
                 Route::post('school-levels/{level}/toggle', [SchoolLevelController::class, 'toggle']);
+                Route::get('school-levels/{level}/subjects', [SchoolLevelController::class, 'subjects']);
+                Route::post('school-levels/{level}/subjects/sync', [SchoolLevelController::class, 'syncSubjects']);
 
                 // Classes
                 Route::post('classes', [ClasseController::class, 'store']);

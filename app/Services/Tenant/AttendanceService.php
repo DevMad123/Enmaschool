@@ -133,6 +133,43 @@ class AttendanceService
     }
 
     /**
+     * Feuille vierge pour une classe sans créneau sélectionné.
+     * Retourne la liste des élèves inscrits sans données de présence.
+     */
+    public function getBlankSheetForClass(int $classeId, Carbon $date): array
+    {
+        $enrollments = Enrollment::with('student')
+            ->where('classe_id', $classeId)
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->get();
+
+        $students = $enrollments->map(fn ($e) => [
+            'enrollment_id' => $e->id,
+            'student'       => $e->student,
+            'attendance'    => null,
+            'status'        => null,
+        ])->values()->toArray();
+
+        $total = count($students);
+
+        return [
+            'entry'       => null,
+            'date'        => $date->toDateString(),
+            'is_recorded' => false,
+            'students'    => $students,
+            'summary'     => [
+                'present'         => 0,
+                'absent'          => 0,
+                'late'            => 0,
+                'excused'         => 0,
+                'total'           => $total,
+                'attendance_rate' => 0.0,
+            ],
+        ];
+    }
+
+    /**
      * Présences de tous les élèves d'une classe pour une date,
      * organisées par timetable_entry (cours du jour).
      */

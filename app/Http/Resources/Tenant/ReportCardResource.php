@@ -52,7 +52,10 @@ class ReportCardResource extends JsonResource
             'classe'       => $this->whenLoaded('classe', fn () => $this->classe ? [
                 'id'           => $this->classe->id,
                 'display_name' => $this->classe->display_name,
-                'level_label'  => $this->classe->schoolLevel?->name,
+                'level_label'  => $this->classe->level?->name,
+                'subjects'     => $this->classe->relationLoaded('subjects')
+                    ? $this->classe->subjects->map(fn ($s) => ['id' => $s->id, 'name' => $s->name, 'coefficient' => $s->coefficient])->values()
+                    : [],
             ] : null),
             'period'       => $this->whenLoaded('period', fn () => $this->period ? [
                 'id'    => $this->period->id,

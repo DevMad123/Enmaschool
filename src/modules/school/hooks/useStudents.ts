@@ -1,6 +1,7 @@
 // ===== src/modules/school/hooks/useStudents.ts =====
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { classeKeys } from './useClasses'
 import type { ApiError } from '@/shared/types/api.types'
 import { toast } from '@/shared/lib/toast'
 import type {
@@ -222,6 +223,7 @@ export function useEnrollStudent() {
     onSuccess: (response) => {
       void queryClient.invalidateQueries({ queryKey: enrollmentKeys.lists() })
       void queryClient.invalidateQueries({ queryKey: studentKeys.lists() })
+      void queryClient.invalidateQueries({ queryKey: classeKeys.lists() })
       toast.success(`Élève inscrit — N° ${response.data.enrollment_number}`)
     },
     onError: (error: ApiError) => {

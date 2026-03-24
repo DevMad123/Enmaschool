@@ -15,7 +15,7 @@ export const reportCardsApi = {
     api.get<PaginatedResponse<ReportCard>>('/api/school/report-cards', { params }),
 
   getOne: (id: number) =>
-    api.get<ApiSuccess<ReportCard>>(`/api/school/report-cards/${id}`),
+    api.get<ApiSuccess<{ report_card: ReportCard; period_averages: Record<number, { average: number | null; rank: number | null; class_average: number | null; min_score: number | null; max_score: number | null }>; is_last_period: boolean; fresh_general_average: number | null; fresh_rank: number | null; fresh_class_size: number | null }>>(`/api/school/report-cards/${id}`),
 
   getClassStats: (classeId: number, periodId?: number) =>
     api.get<ApiSuccess<ClassBulletinsStats>>('/api/school/report-cards/class-stats', {

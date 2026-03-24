@@ -31,8 +31,9 @@ class ClasseResource extends JsonResource
                 'name' => $this->room->name,
                 'code' => $this->room->code,
             ] : null),
-            'subjects_count' => $this->whenCounted('subjects'),
-            'students_count' => 0,
+            'subjects_count'  => $this->whenCounted('subjects'),
+            'enrolled_count'  => (int) ($this->enrolled_count ?? 0),
+            'spots_remaining' => max(0, ($this->capacity ?? 0) - (int) ($this->enrolled_count ?? 0)),
         ];
     }
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { ClipboardCheck, BarChart2, FileText, Calendar } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { useSchoolStore } from '../store/schoolStore'
@@ -15,6 +15,7 @@ type Tab = 'sheet' | 'stats' | 'justifications'
 
 export function AttendancePage() {
   const navigate           = useNavigate()
+  const { pathname }       = useLocation()
   const { currentYearId }  = useSchoolStore()
   const [tab,          setTab]          = useState<Tab>('stats')
   const [selectedClassId, setSelectedClassId] = useState<number>(0)
@@ -66,9 +67,11 @@ export function AttendancePage() {
                 else setTab(t.id)
               }}
               className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                tab === t.id
+                t.id === 'stats' && pathname === '/school/attendance'
                   ? 'bg-indigo-600 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  : t.id !== 'stats' && tab === t.id
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Icon className="h-4 w-4" />

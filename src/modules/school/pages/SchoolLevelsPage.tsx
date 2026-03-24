@@ -1,19 +1,22 @@
 import { useState } from 'react'
-import { ToggleLeft, ToggleRight } from 'lucide-react'
+import { ToggleLeft, ToggleRight, BookOpen } from 'lucide-react'
 import { useSchoolLevels, useToggleSchoolLevel } from '../hooks/useSchoolLevels'
 import { LevelCategoryBadge } from '../components/LevelCategoryBadge'
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner'
 import type { LevelCategory, SchoolLevel } from '../types/school.types'
 import { getLevelCategoryLabel } from '../lib/classeHelpers'
+import { LevelSubjectsModal } from './LevelSubjectsModal'
 
 const CATEGORIES: LevelCategory[] = ['maternelle', 'primaire', 'college', 'lycee']
 
 function LevelCard({
   level,
   onToggle,
+  onEditSubjects,
 }: {
   level: SchoolLevel
   onToggle: (id: number) => void
+  onEditSubjects: (level: SchoolLevel) => void
 }) {
   return (
     <div
@@ -45,12 +48,22 @@ function LevelCard({
           Avec série
         </span>
       )}
+      <div className="mt-3 border-t border-slate-100 pt-2.5">
+        <button
+          onClick={() => onEditSubjects(level)}
+          className="flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+        >
+          <BookOpen className="h-3.5 w-3.5" />
+          Affecter les matières
+        </button>
+      </div>
     </div>
   )
 }
 
 export function SchoolLevelsPage() {
-  const [filterCategory, setFilterCategory] = useState<LevelCategory | null>(null)
+  const [filterCategory,    setFilterCategory]    = useState<LevelCategory | null>(null)
+  const [subjectsForLevel,  setSubjectsForLevel]  = useState<SchoolLevel | null>(null)
   const { data, isLoading } = useSchoolLevels()
   const { mutate: toggle } = useToggleSchoolLevel()
 
@@ -126,12 +139,20 @@ export function SchoolLevelsPage() {
                   key={level.id}
                   level={level}
                   onToggle={(id) => toggle(id)}
+                  onEditSubjects={setSubjectsForLevel}
                 />
               ))}
             </div>
           </div>
         )
       })}
+
+      {subjectsForLevel && (
+        <LevelSubjectsModal
+          level={subjectsForLevel}
+          onClose={() => setSubjectsForLevel(null)}
+        />
+      )}
     </div>
   )
 }

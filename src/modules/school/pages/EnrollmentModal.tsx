@@ -55,10 +55,9 @@ export function EnrollmentModal({ open, onClose, studentId, studentName }: Enrol
   )
 
   const selectedClasse = classes.find((c) => c.id === watchedClasseId)
-  const enrolledCount = 0 // À enrichir avec le count de l'API
+  const spotsRemaining = selectedClasse?.spots_remaining ?? selectedClasse?.capacity ?? 40
   const capacity = selectedClasse?.capacity ?? 40
-  const fillRatio = capacity > 0 ? enrolledCount / capacity : 0
-  const nearlyFull = fillRatio >= 0.9
+  const nearlyFull = spotsRemaining <= Math.max(1, Math.ceil(capacity * 0.1))
 
   useEffect(() => {
     if (open) {
@@ -117,7 +116,7 @@ export function EnrollmentModal({ open, onClose, studentId, studentName }: Enrol
               <option value="">Sélectionner une classe</option>
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.display_name} (capacité: {c.capacity})
+                  {c.display_name} ({c.spots_remaining ?? c.capacity} place(s) restante(s))
                 </option>
               ))}
             </select>
@@ -130,7 +129,7 @@ export function EnrollmentModal({ open, onClose, studentId, studentName }: Enrol
           {nearlyFull && selectedClasse && (
             <div className="flex items-center gap-2 rounded-md bg-orange-50 px-3 py-2 text-sm text-orange-700">
               <AlertTriangle className="h-4 w-4 shrink-0" />
-              Cette classe est presque complète ({enrolledCount}/{capacity} places)
+              Cette classe est presque complète ({spotsRemaining} place(s) restante(s) sur {capacity})
             </div>
           )}
 

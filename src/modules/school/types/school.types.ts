@@ -84,6 +84,8 @@ export interface Classe {
   room?: { id: number; name: string; code: string | null } | null
   subjects_count?: number
   students_count?: number
+  enrolled_count?: number
+  spots_remaining?: number
 }
 
 export interface ClasseFormData {

@@ -34,7 +34,7 @@ export function useReportCards(filters?: ReportCardFilters) {
 export function useReportCard(id: number | undefined) {
   return useQuery({
     queryKey: reportCardKeys.detail(id!),
-    queryFn:  () => reportCardsApi.getOne(id!).then((r) => r.data),
+    queryFn:  () => reportCardsApi.getOne(id!).then((r) => r.data.data),
     enabled:  !!id,
   })
 }

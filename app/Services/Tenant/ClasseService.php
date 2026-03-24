@@ -16,7 +16,8 @@ class ClasseService
     public function list(array $filters = []): LengthAwarePaginator
     {
         $query = Classe::with(['level', 'mainTeacher', 'room'])
-            ->withCount('subjects');
+            ->withCount('subjects')
+            ->withCount(['enrollments as enrolled_count' => fn ($q) => $q->where('is_active', true)]);
 
         if (! empty($filters['academic_year_id'])) {
             $query->forYear((int) $filters['academic_year_id']);

@@ -15,6 +15,7 @@ import { EnrollmentTimeline } from '../components/EnrollmentTimeline'
 import { StudentFormModal } from './StudentFormModal'
 import { EnrollmentModal } from './EnrollmentModal'
 import { useStudent } from '../hooks/useStudents'
+import { StudentAttendanceTab } from './StudentAttendanceTab'
 
 const TABS = [
   { key: 'dossier', label: 'Dossier' },
@@ -191,7 +192,9 @@ export function StudentDetailPage() {
           <Placeholder title="Notes & Bulletins" phase="Phase 6" />
         )}
         {activeTab === 'presences' && (
-          <Placeholder title="Présences" phase="Phase 9" />
+          <StudentAttendanceTab
+            enrollmentId={student.current_enrollment?.id ?? 0}
+          />
         )}
         {activeTab === 'paiements' && (
           <Placeholder title="Frais scolaires" phase="Phase 10" />

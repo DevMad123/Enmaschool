@@ -293,7 +293,7 @@ export function ReportCardsPage() {
                   </td>
                   <td className="px-4 py-3 text-center text-gray-600">
                     {rc.general_rank && rc.class_size
-                      ? `${rc.general_rank}/${rc.class_size}`
+                      ? `${rc.general_rank}${rc.general_rank === 1 ? 'er' : 'e'}/${rc.class_size}`
                       : '—'}
                   </td>
                   <td className="px-4 py-3">
@@ -346,7 +346,8 @@ export function ReportCardsPage() {
                             size="sm" variant="ghost"
                             onClick={() => handleDownload(rc)}
                           >
-                            <Download className="h-3.5 w-3.5" />
+                            <Download className="h-3.5 w-3.5 mr-1" />
+                            PDF
                           </Button>
                           <Button
                             size="sm" variant="ghost"
@@ -376,7 +377,8 @@ export function ReportCardsPage() {
                             size="sm" variant="ghost"
                             onClick={() => handleDownload(rc)}
                           >
-                            <Download className="h-3.5 w-3.5" />
+                            <Download className="h-3.5 w-3.5 mr-1" />
+                            PDF
                           </Button>
                         </>
                       )}

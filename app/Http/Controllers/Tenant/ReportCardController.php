@@ -93,7 +93,8 @@ class ReportCardController extends Controller
     {
         $reportCard->load([
             'student',
-            'classe.schoolLevel',
+            'classe.level',
+            'classe.subjects',
             'period',
             'academicYear',
             'appreciations.subject',
@@ -101,7 +102,71 @@ class ReportCardController extends Controller
             'publishedBy',
         ]);
 
-        return $this->success(new ReportCardResource($reportCard));
+        // Moyennes par matière pour cette période — affichées dans l'éditeur
+        $periodAverages = \App\Models\Tenant\PeriodAverage::with('subject')
+            ->where('enrollment_id', $reportCard->enrollment_id)
+            ->when($reportCard->period_id, fn ($q) => $q->where('period_id', $reportCard->period_id))
+            ->get()
+            ->keyBy('subject_id')
+            ->map(fn ($pa) => [
+                'average'       => $pa->average !== null ? (float) $pa->average : null,
+                'rank'          => $pa->rank,
+                'class_average' => $pa->class_average !== null ? (float) $pa->class_average : null,
+                'min_score'     => $pa->min_score !== null ? (float) $pa->min_score : null,
+                'max_score'     => $pa->max_score !== null ? (float) $pa->max_score : null,
+            ]);
+
+        // Rang général frais calculé depuis les period_averages de toute la classe
+        $freshRank           = null;
+        $freshClassSize      = null;
+        $freshGeneralAverage = null;
+
+        if ($reportCard->class_id) {
+            // Effectif = toutes inscriptions actives (indépendant des notes)
+            $freshClassSize = \App\Models\Tenant\Enrollment::where('classe_id', $reportCard->class_id)
+                ->where('is_active', true)
+                ->count();
+        }
+
+        if ($reportCard->class_id && $reportCard->period_id) {
+            $classEnrollmentIds = \App\Models\Tenant\Enrollment::where('classe_id', $reportCard->class_id)
+                ->where('is_active', true)
+                ->pluck('id');
+
+            $classAverages = \App\Models\Tenant\PeriodAverage::whereIn('enrollment_id', $classEnrollmentIds)
+                ->where('period_id', $reportCard->period_id)
+                ->selectRaw('enrollment_id, SUM(weighted_average) as total_weighted, SUM(coefficient) as total_coeff')
+                ->groupBy('enrollment_id')
+                ->get()
+                ->filter(fn ($row) => (float) $row->total_coeff > 0)
+                ->mapWithKeys(fn ($row) => [
+                    $row->enrollment_id => round((float) $row->total_weighted / (float) $row->total_coeff, 2),
+                ]);
+
+            $myAvg = $classAverages->get($reportCard->enrollment_id);
+
+            if ($myAvg !== null) {
+                $freshGeneralAverage = $myAvg;
+                $freshRank = $classAverages->filter(fn ($avg) => $avg > $myAvg)->count() + 1;
+            }
+        }
+
+        // Détermine si la période courante est la dernière de l'année (pour activer "Décision du conseil")
+        $isLastPeriod = false;
+        if ($reportCard->period_id && $reportCard->academicYear) {
+            $maxOrder = \App\Models\Tenant\Period::where('academic_year_id', $reportCard->academicYear->id)
+                ->max('order');
+            $isLastPeriod = $reportCard->period?->order === $maxOrder;
+        }
+
+        return $this->success([
+            'report_card'          => new ReportCardResource($reportCard),
+            'period_averages'      => $periodAverages,
+            'is_last_period'       => $isLastPeriod,
+            'fresh_general_average' => $freshGeneralAverage,
+            'fresh_rank'           => $freshRank,
+            'fresh_class_size'     => $freshClassSize,
+        ]);
     }
 
     public function preview(ReportCard $reportCard): JsonResponse

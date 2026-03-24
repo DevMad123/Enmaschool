@@ -8,6 +8,8 @@ use App\Enums\LevelCategory;
 use App\Enums\LevelCode;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Models\Tenant\Subject;
 
 class SchoolLevel extends Model
 {
@@ -30,6 +32,16 @@ class SchoolLevel extends Model
             'is_active' => 'boolean',
             'order' => 'integer',
         ];
+    }
+
+    // ── Relations ──────────────────────────────────────────────
+
+    public function subjects(): BelongsToMany
+    {
+        return $this->belongsToMany(Subject::class, 'level_subjects', 'school_level_id', 'subject_id')
+            ->withPivot(['coefficient', 'hours_per_week', 'is_active'])
+            ->withTimestamps()
+            ->orderBy('subjects.name');
     }
 
     // ── Scopes ─────────────────────────────────────────────────

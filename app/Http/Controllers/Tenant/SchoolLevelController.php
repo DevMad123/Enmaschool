@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Tenant\SchoolLevelResource;
+use App\Http\Resources\Tenant\SubjectResource;
 use App\Models\Tenant\Classe;
 use App\Models\Tenant\SchoolLevel;
 use App\Traits\ApiResponse;
@@ -27,6 +28,44 @@ class SchoolLevelController extends Controller
         $levels = $query->get();
 
         return $this->success(data: SchoolLevelResource::collection($levels));
+    }
+
+    /**
+     * GET /school-levels/{level}/subjects
+     * Retourne les matières assignées au niveau.
+     */
+    public function subjects(SchoolLevel $level): JsonResponse
+    {
+        $subjects = $level->subjects()->get();
+
+        return $this->success(data: SubjectResource::collection($subjects));
+    }
+
+    /**
+     * POST /school-levels/{level}/subjects/sync
+     * Synchronise les matières du niveau ET propage vers toutes les classes du niveau.
+     */
+    public function syncSubjects(Request $request, SchoolLevel $level): JsonResponse
+    {
+        $request->validate([
+            'subject_ids'   => ['required', 'array'],
+            'subject_ids.*' => ['integer', 'exists:subjects,id'],
+        ]);
+
+        $subjectIds = $request->input('subject_ids');
+
+        // 1. Sync level_subjects
+        $level->subjects()->sync($subjectIds);
+
+        // 2. Propager vers toutes les classes de ce niveau
+        $classes = Classe::where('school_level_id', $level->id)->get();
+        foreach ($classes as $classe) {
+            $classe->subjects()->sync($subjectIds);
+        }
+
+        return $this->success(
+            message: count($subjectIds) . ' matière(s) synchronisée(s) sur le niveau et ' . $classes->count() . ' classe(s).',
+        );
     }
 
     public function toggle(SchoolLevel $level): JsonResponse

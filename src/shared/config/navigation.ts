@@ -117,6 +117,15 @@ export const navigation: NavItem[] = [
     roles: ['school_admin', 'director', 'teacher'],
   },
 
+  // ── Présences & Absences (Phase 9) ───────────────────────────────────
+  {
+    label: 'Présences',
+    path: '/school/attendance',
+    icon: 'ClipboardCheck',
+    module: 'school',
+    roles: ['school_admin', 'director', 'teacher'],
+  },
+
   // ── Rôles & Utilisateurs (Phase 3) ───────────────────────────────────
   {
     label: 'Utilisateurs',

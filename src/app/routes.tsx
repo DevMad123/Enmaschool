@@ -52,6 +52,12 @@ import { ReportCardEditorPage } from '@/modules/school/pages/ReportCardEditorPag
 // ── School module pages (Phase 8) ────────────────────────────────────
 import { TimetablePage } from '@/modules/school/pages/TimetablePage';
 
+// ── School module pages (Phase 9) ────────────────────────────────────
+import { AttendancePage } from '@/modules/school/pages/AttendancePage';
+import { AttendanceSheetPage } from '@/modules/school/pages/AttendanceSheetPage';
+import { ClassAttendanceStatsPage } from '@/modules/school/pages/ClassAttendanceStatsPage';
+import { JustificationsPage } from '@/modules/school/pages/JustificationsPage';
+
 // ── School module pages (Phase 3) ────────────────────────────────────
 import { UsersPage } from '@/modules/school/pages/users/UsersPage';
 import { UserDetailPage } from '@/modules/school/pages/users/UserDetailPage';
@@ -439,6 +445,40 @@ export const routes: RouteObject[] = [
         element: (
           <RoleRoute roles={['school_admin', 'director', 'teacher']}>
             <TimetablePage />
+          </RoleRoute>
+        ),
+      },
+
+      // ── Présences & Absences (Phase 9) ──────────────────────────────
+      {
+        path: 'school/attendance',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <AttendancePage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/attendance/sheet',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <AttendanceSheetPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/attendance/class/:id',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <ClassAttendanceStatsPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/attendance/justifications',
+        element: (
+          <RoleRoute roles={['school_admin', 'director']}>
+            <JustificationsPage />
           </RoleRoute>
         ),
       },

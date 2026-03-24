@@ -54,7 +54,12 @@ export function ReportCardEditorPage() {
   const rcId = Number(id)
 
   const { data: rcData, isLoading } = useReportCard(rcId)
-  const rc = rcData?.data
+  const rc                 = rcData?.report_card
+  const periodAverages     = rcData?.period_averages ?? {}
+  const isLastPeriod       = rcData?.is_last_period ?? false
+  const freshGeneralAvg    = rcData?.fresh_general_average ?? null
+  const freshRank          = rcData?.fresh_rank ?? null
+  const freshClassSize     = rcData?.fresh_class_size ?? null
 
   // Appréciations locales (une par matière)
   const [appreciations, setAppreciations] = useState<Record<number, string>>({})
@@ -155,8 +160,10 @@ export function ReportCardEditorPage() {
   if (isLoading) return <LoadingSpinner fullScreen />
   if (!rc) return <p className="p-8 text-gray-500">Bulletin introuvable.</p>
 
-  // Extraire les matières depuis les appréciations ou bulletin_data
-  const subjectList = rc.appreciations?.map((a) => a.subject).filter(Boolean) ?? []
+  // Matières depuis les appréciations existantes, sinon depuis le programme de la classe
+  const subjectList = rc.appreciations && rc.appreciations.length > 0
+    ? rc.appreciations.map((a) => a.subject).filter(Boolean)
+    : (rc.classe?.subjects ?? [])
 
   return (
     <div className="space-y-6">
@@ -234,18 +241,36 @@ export function ReportCardEditorPage() {
                   subjectList.map((subject) => {
                     if (!subject) return null
                     const appre = rc.appreciations?.find((a) => a.subject?.id === subject.id)
+                    const pa    = periodAverages[subject.id]
+                    const avg   = pa?.average
+                    const avgColor = avg == null ? 'text-gray-400'
+                      : avg >= 10 ? 'text-green-700 font-semibold' : 'text-red-600 font-semibold'
                     return (
                       <tr key={subject.id}>
                         <td className="px-4 py-2">
                           <span className="font-medium text-gray-900">{subject.name}</span>
-                          {subject.code && (
+                          {'code' in subject && subject.code && (
                             <span className="ml-1.5 text-xs text-gray-400">{subject.code}</span>
                           )}
                         </td>
                         <td className="px-3 py-2 text-center text-gray-600">
                           {subject.coefficient ?? '—'}
                         </td>
-                        <td className="px-3 py-2 text-center font-mono text-gray-700">—</td>
+                        <td className="px-3 py-2 text-center font-mono">
+                          <span className={avgColor}>
+                            {avg != null ? avg.toFixed(2) : '—'}
+                          </span>
+                          {pa?.rank != null && freshClassSize != null && (
+                            <span className="block text-xs text-indigo-500" title="Rang dans la classe">
+                              {pa.rank}{pa.rank === 1 ? 'er' : 'e'}/{freshClassSize}
+                            </span>
+                          )}
+                          {pa?.class_average != null && (
+                            <span className="block text-xs text-gray-400" title="Moyenne de classe">
+                              moy.cl. {pa.class_average.toFixed(2)}
+                            </span>
+                          )}
+                        </td>
                         <td className="px-4 py-2">
                           {isReadOnly ? (
                             <p className="text-sm text-gray-600 italic">
@@ -297,15 +322,17 @@ export function ReportCardEditorPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Moyenne</span>
-                <span className="font-medium text-indigo-700">
-                  {rc.general_average !== null ? `${Number(rc.general_average).toFixed(2)}/20` : '—'}
+                <span className={`font-medium ${(freshGeneralAvg ?? rc.general_average) !== null && Number(freshGeneralAvg ?? rc.general_average) >= 10 ? 'text-green-700' : 'text-red-600'}`}>
+                  {(freshGeneralAvg ?? rc.general_average) !== null
+                    ? `${Number(freshGeneralAvg ?? rc.general_average).toFixed(2)}/20`
+                    : '—'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Rang</span>
-                <span>
-                  {rc.general_rank && rc.class_size
-                    ? `${rc.general_rank}/${rc.class_size}`
+                <span className="font-medium">
+                  {(freshRank ?? rc.general_rank) && (freshClassSize ?? rc.class_size)
+                    ? (() => { const r = freshRank ?? rc.general_rank!; return `${r}${r === 1 ? 'er' : 'e'}/${freshClassSize ?? rc.class_size}` })()
                     : '—'}
                 </span>
               </div>
@@ -340,8 +367,13 @@ export function ReportCardEditorPage() {
           </div>
 
           {/* Card décision */}
-          <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-900">Décision du conseil</h3>
+          <div className={`rounded-xl border bg-white p-4 space-y-3 ${isLastPeriod ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-900">Décision du conseil</h3>
+              {!isLastPeriod && (
+                <span className="text-xs text-gray-400 italic">Disponible sur le dernier trimestre/semestre</span>
+              )}
+            </div>
 
             <div>
               <label className="text-xs text-gray-500">Appréciation générale (max 500)</label>
@@ -350,7 +382,7 @@ export function ReportCardEditorPage() {
                 maxLength={500}
                 value={generalAppreciation}
                 onChange={(e) => setGeneralAppreciation(e.target.value)}
-                disabled={isReadOnly}
+                disabled={isReadOnly || !isLastPeriod}
                 placeholder="Appréciation générale du conseil de classe…"
                 className="mt-1 w-full resize-none rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:bg-gray-50 disabled:text-gray-500"
               />
@@ -369,15 +401,15 @@ export function ReportCardEditorPage() {
                       councilDecision === d.value
                         ? 'border-indigo-400 bg-indigo-50 text-indigo-800'
                         : 'border-gray-200 text-gray-700 hover:bg-gray-50'
-                    } ${isReadOnly ? 'cursor-not-allowed opacity-60' : ''}`}
+                    } ${(isReadOnly || !isLastPeriod) ? 'cursor-not-allowed opacity-60' : ''}`}
                   >
                     <input
                       type="radio"
                       name="council_decision"
                       value={d.value}
                       checked={councilDecision === d.value}
-                      onChange={() => !isReadOnly && setCouncilDecision(d.value)}
-                      disabled={isReadOnly}
+                      onChange={() => !isReadOnly && isLastPeriod && setCouncilDecision(d.value)}
+                      disabled={isReadOnly || !isLastPeriod}
                       className="sr-only"
                     />
                     {d.label}
@@ -394,8 +426,8 @@ export function ReportCardEditorPage() {
                     <button
                       key={m.value}
                       type="button"
-                      disabled={isReadOnly}
-                      onClick={() => !isReadOnly && setHonorMention(m.value)}
+                      disabled={isReadOnly || !isLastPeriod}
+                      onClick={() => !isReadOnly && isLastPeriod && setHonorMention(m.value)}
                       className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                         honorMention === m.value
                           ? 'border-purple-400 bg-purple-100 text-purple-800'

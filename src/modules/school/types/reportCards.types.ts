@@ -86,7 +86,7 @@ export interface ReportCard {
   published_at:          string | null
   is_editable:           boolean
   student?:              StudentListItem
-  classe?:               { id: number; display_name: string; level_label: string }
+  classe?:               { id: number; display_name: string; level_label: string; subjects?: { id: number; name: string; coefficient: number }[] }
   period?:               { id: number; name: string; order: number } | null
   academic_year?:        { id: number; name: string }
   appreciations?:        ReportCardAppreciation[]

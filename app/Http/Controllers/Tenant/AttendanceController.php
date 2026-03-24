@@ -47,18 +47,8 @@ class AttendanceController extends Controller
 
             $sheet = $this->service->getSheetForEntry($entry, $date);
         } else {
-            $sheet = [
-                'entry'       => null,
-                'date'        => $date->toDateString(),
-                'is_recorded' => false,
-                'students'    => [],
-                'summary'     => ['present' => 0, 'absent' => 0, 'late' => 0, 'excused' => 0, 'total' => 0, 'attendance_rate' => 0.0],
-            ];
-            $classData = $this->service->getForClass($request->integer('class_id'), $date);
-            // Return grouped view (all courses of the day)
-            return $this->success(
-                collect($classData)->map(fn ($row) => (new AttendanceSheetResource($row))->toArray($request))->all()
-            );
+            // Pas de créneau sélectionné : feuille vierge avec tous les élèves de la classe
+            $sheet = $this->service->getBlankSheetForClass($request->integer('class_id'), $date);
         }
 
         return $this->success(new AttendanceSheetResource($sheet));

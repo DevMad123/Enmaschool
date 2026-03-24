@@ -219,7 +219,7 @@ class ReportCardService
     {
         $rc->load([
             'student',
-            'classe.schoolLevel',
+            'classe.level',
             'classe.mainTeacher.user',
             'academicYear',
             'period',
@@ -254,7 +254,7 @@ class ReportCardService
         $mainTeacher = $classe?->mainTeacher?->user;
         $classeData = [
             'display_name'      => $classe?->display_name,
-            'level_label'       => $classe?->schoolLevel?->name,
+            'level_label'       => $classe?->level?->name,
             'category'          => $classe?->serie,
             'main_teacher_name' => $mainTeacher ? $mainTeacher->first_name . ' ' . strtoupper($mainTeacher->last_name) : null,
         ];
@@ -276,16 +276,17 @@ class ReportCardService
 
         $passingAverage = (float) SchoolSetting::get('passing_average', 10.0);
 
+        // Priorité au calcul frais depuis period_averages ; fallback sur la valeur snapshot stockée
+        $freshAverage = $generalStats['average'] ?? $rc->general_average;
+
         $stats = [
-            'general_average'       => $rc->general_average ?? $generalStats['average'],
-            'general_rank'          => $rc->general_rank    ?? $generalStats['rank'],
-            'class_size'            => $rc->class_size      ?? $generalStats['class_size'],
-            'class_average'         => $rc->class_average   ?? $generalStats['class_average'],
+            'general_average'       => $freshAverage,
+            'general_rank'          => $generalStats['rank']         ?? $rc->general_rank,
+            'class_size'            => $generalStats['class_size']   ?? $rc->class_size,
+            'class_average'         => $generalStats['class_average'] ?? $rc->class_average,
             'absences_justified'    => $rc->absences_justified,
             'absences_unjustified'  => $rc->absences_unjustified,
-            'is_passing'            => $rc->general_average !== null
-                ? (float) $rc->general_average >= $passingAverage
-                : ($generalStats['average'] !== null ? (float) $generalStats['average'] >= $passingAverage : null),
+            'is_passing'            => $freshAverage !== null ? (float) $freshAverage >= $passingAverage : null,
             'council_decision'       => $rc->council_decision?->value,
             'council_decision_label' => $rc->council_decision?->label(),
             'honor_mention'          => $rc->honor_mention?->value,
@@ -408,13 +409,36 @@ class ReportCardService
             $totalCoeff    = $periodAverages->sum('coefficient');
             $average       = $totalCoeff > 0 ? round((float) $totalWeighted / (float) $totalCoeff, 2) : null;
 
-            // Récupère rang et class_size depuis la première matière (tous ont le même effectif)
-            $firstPa    = $periodAverages->first();
-            $classSize  = null;
-            $classAvg   = null;
+            // Effectif de la classe (toutes inscriptions actives)
+            $classSize = $rc->class_id
+                ? Enrollment::where('classe_id', $rc->class_id)->where('is_active', true)->count()
+                : null;
 
-            // Calcul rang global via les autres bulletins de la même classe/période
-            $rank = null;
+            $classAvg  = null;
+            $rank      = null;
+
+            if ($rc->class_id && $rc->period_id) {
+                // Moyennes pondérées de tous les élèves de la classe pour cette période
+                $classEnrollmentIds = Enrollment::where('classe_id', $rc->class_id)
+                    ->where('is_active', true)
+                    ->pluck('id');
+
+                $classAverages = \App\Models\Tenant\PeriodAverage::whereIn('enrollment_id', $classEnrollmentIds)
+                    ->where('period_id', $rc->period_id)
+                    ->selectRaw('enrollment_id, SUM(weighted_average) as total_weighted, SUM(coefficient) as total_coeff')
+                    ->groupBy('enrollment_id')
+                    ->get()
+                    ->filter(fn ($row) => (float) $row->total_coeff > 0)
+                    ->map(fn ($row) => round((float) $row->total_weighted / (float) $row->total_coeff, 2));
+
+                if ($classAverages->count() > 0) {
+                    $classAvg = round((float) $classAverages->avg(), 2);
+                }
+
+                if ($average !== null) {
+                    $rank = $classAverages->filter(fn ($avg) => $avg > $average)->count() + 1;
+                }
+            }
 
         } else {
             $subjectAverages = \App\Models\Tenant\SubjectAverage::where('enrollment_id', $rc->enrollment_id)->get();

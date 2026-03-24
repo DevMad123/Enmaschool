@@ -235,7 +235,7 @@
         <td class="left">{{ $s['name'] }}</td>
         <td>{{ $s['coefficient'] }}</td>
         <td><strong>{{ $s['period_average'] !== null ? number_format((float)$s['period_average'], 2) : '—' }}</strong></td>
-        <td>{{ $s['rank'] !== null ? $s['rank'] . '/' . ($stats['class_size'] ?? '?') : '—' }}</td>
+        <td>{{ $s['rank'] !== null ? $s['rank'] . ($s['rank'] === 1 ? 'er' : 'e') . '/' . ($stats['class_size'] ?? '?') : '—' }}</td>
         <td>{{ $s['class_average'] !== null ? number_format((float)$s['class_average'], 2) : '—' }}</td>
         <td>{{ $s['min_score'] !== null ? number_format((float)$s['min_score'], 2) : '—' }}</td>
         <td>{{ $s['max_score'] !== null ? number_format((float)$s['max_score'], 2) : '—' }}</td>
@@ -251,7 +251,7 @@
         </td>
         <td>
           {{ $stats['general_rank'] !== null
-            ? $stats['general_rank'] . '/' . ($stats['class_size'] ?? '?')
+            ? $stats['general_rank'] . ($stats['general_rank'] === 1 ? 'er' : 'e') . '/' . ($stats['class_size'] ?? '?')
             : '—' }}
         </td>
         <td>{{ $stats['class_average'] !== null ? number_format((float)$stats['class_average'], 2) : '—' }}</td>
@@ -301,7 +301,7 @@
           <td>{{ $s['period_3_avg'] !== null ? number_format((float)$s['period_3_avg'], 2) : '—' }}</td>
         @endif
         <td><strong>{{ $s['annual_avg'] !== null ? number_format((float)$s['annual_avg'], 2) : '—' }}</strong></td>
-        <td>{{ $s['rank'] !== null ? $s['rank'] . '/' . ($stats['class_size'] ?? '?') : '—' }}</td>
+        <td>{{ $s['rank'] !== null ? $s['rank'] . ($s['rank'] === 1 ? 'er' : 'e') . '/' . ($stats['class_size'] ?? '?') : '—' }}</td>
         <td class="left" style="font-size:8px; font-style:italic;">{{ $s['appreciation'] ?? '' }}</td>
       </tr>
       @endforeach
@@ -323,7 +323,7 @@
         </td>
         <td>
           {{ $stats['general_rank'] !== null
-            ? $stats['general_rank'] . '/' . ($stats['class_size'] ?? '?')
+            ? $stats['general_rank'] . ($stats['general_rank'] === 1 ? 'er' : 'e') . '/' . ($stats['class_size'] ?? '?')
             : '—' }}
         </td>
         <td></td>

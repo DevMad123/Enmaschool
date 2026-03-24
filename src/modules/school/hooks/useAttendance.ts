@@ -32,7 +32,7 @@ export function useAttendanceSheet(
     queryKey: attendanceKeys.sheet(entryId, classeId, date),
     queryFn:  () =>
       attendanceApi.getSheet({ entry_id: entryId, class_id: classeId, date }).then((r) => r.data.data),
-    enabled:  !!classeId && !!date,
+    enabled:  !!entryId && !!classeId && !!date,
     staleTime: 30_000, // 30 secondes — données quasi temps réel
   })
 }

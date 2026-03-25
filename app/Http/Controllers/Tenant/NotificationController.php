@@ -28,7 +28,9 @@ class NotificationController extends Controller
 
         $notifications = $this->service->getForUser($request->user(), $filters);
 
-        return $this->successResponse(NotificationResource::collection($notifications)->response()->getData(true));
+        return $this->paginated(
+            $notifications->through(fn ($n) => new NotificationResource($n)),
+        );
     }
 
     public function markRead(Request $request, string $notification): JsonResponse

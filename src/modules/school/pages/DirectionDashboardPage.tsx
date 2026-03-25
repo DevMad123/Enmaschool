@@ -33,7 +33,8 @@ import { KpiCard } from '../components/KpiCard';
 import { CHART_COLORS, GENDER_COLORS, PIE_COLORS } from '../lib/dashboardHelpers';
 
 export function DirectionDashboardPage() {
-  const { data: years = [] } = useAcademicYears();
+  const { data: yearsData } = useAcademicYears();
+  const years = yearsData?.data ?? [];
   const currentYear = years.find((y) => y.is_current) ?? years[0];
   const [yearId, setYearId] = useState<number>(currentYear?.id ?? 0);
 

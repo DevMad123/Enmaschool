@@ -12,7 +12,8 @@ import { KpiCard } from '../components/KpiCard';
 import { PassingRateChart } from '../components/PassingRateChart';
 
 export function AcademicDashboardPage() {
-  const { data: years = [] } = useAcademicYears();
+  const { data: yearsData } = useAcademicYears();
+  const years = yearsData?.data ?? [];
   const currentYear = years.find((y) => y.is_current) ?? years[0];
   const [yearId, setYearId] = useState<number>(currentYear?.id ?? 0);
   const [periodId, setPeriodId] = useState<number | undefined>();

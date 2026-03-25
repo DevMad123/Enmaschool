@@ -35,7 +35,9 @@ class ConversationController extends Controller
         $user  = $request->user();
         $convs = $this->convService->listForUser($user);
 
-        return $this->successResponse(ConversationResource::collection($convs)->response()->getData(true));
+        return $this->paginated(
+            $convs->through(fn ($c) => new ConversationResource($c)),
+        );
     }
 
     public function store(StoreConversationRequest $request): JsonResponse
@@ -72,7 +74,9 @@ class ConversationController extends Controller
 
         $messages = $this->msgService->getMessages($conv, $request->user(), $request->all());
 
-        return $this->successResponse(MessageResource::collection($messages)->response()->getData(true));
+        return $this->paginated(
+            $messages->through(fn ($m) => new MessageResource($m)),
+        );
     }
 
     public function sendMessage(SendMessageRequest $request, string $conversation): JsonResponse

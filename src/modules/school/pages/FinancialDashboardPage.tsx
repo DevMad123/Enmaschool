@@ -17,7 +17,8 @@ import { ProgressRing } from '../components/ProgressRing';
 import { getCollectionRateColor, PIE_COLORS } from '../lib/dashboardHelpers';
 
 export function FinancialDashboardPage() {
-  const { data: years = [] } = useAcademicYears();
+  const { data: yearsData } = useAcademicYears();
+  const years = yearsData?.data ?? [];
   const currentYear = years.find((y) => y.is_current) ?? years[0];
   const [yearId, setYearId] = useState<number>(currentYear?.id ?? 0);
 

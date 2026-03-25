@@ -17,13 +17,15 @@ import { ExportButton } from '../components/ExportButton';
 import { reportsApi } from '../api/dashboard.api';
 
 export function ReportsPage() {
-  const { data: years = [] } = useAcademicYears();
+  const { data: yearsData } = useAcademicYears();
+  const years = yearsData?.data ?? [];
   const currentYear = years.find((y) => y.is_current) ?? years[0];
   const [yearId, setYearId] = useState<number>(currentYear?.id ?? 0);
 
-  const { data: classes = [] } = useClasses();
-  const { data: periodsRaw = [] } = useAcademicYearPeriods(yearId);
-  const periods = periodsRaw as Array<{ id: number; name: string }>;
+  const { data: classesData } = useClasses();
+  const classes = classesData?.data ?? [];
+  const { data: periodsRaw } = useAcademicYearPeriods(yearId);
+  const periods = (periodsRaw?.data ?? []) as Array<{ id: number; name: string }>;
 
   // Filtres élèves
   const [studentFilters, setStudentFilters] = useState({ level_category: '', classe_id: '', status: '', gender: '' });

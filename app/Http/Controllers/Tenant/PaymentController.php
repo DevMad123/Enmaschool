@@ -55,7 +55,9 @@ class PaymentController extends Controller
         $perPage  = min((int) $request->input('per_page', 20), 100);
         $payments = $query->paginate($perPage);
 
-        return $this->successResponse(PaymentResource::collection($payments)->response()->getData(true));
+        return $this->paginated(
+            $payments->through(fn ($p) => new PaymentResource($p)),
+        );
     }
 
     public function store(RecordPaymentRequest $request): JsonResponse

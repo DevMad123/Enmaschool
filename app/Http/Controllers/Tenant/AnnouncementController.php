@@ -29,7 +29,9 @@ class AnnouncementController extends Controller
 
         $announcements = $this->service->list($request->user(), $filters);
 
-        return $this->successResponse(AnnouncementResource::collection($announcements)->response()->getData(true));
+        return $this->paginated(
+            $announcements->through(fn ($a) => new AnnouncementResource($a)),
+        );
     }
 
     public function store(StoreAnnouncementRequest $request): JsonResponse

@@ -47,7 +47,10 @@
       "Bash(curl -sv http://enmaschool.com:8000/api/auth/login)",
       "Bash(curl -s http://127.0.0.1:8001/api/auth/login -X POST -H \"Content-Type: application/json\" -H \"X-Tenant: enmaschool.com\" -d '{\"\"email\"\":\"\"superadmin@enmaschool.com\"\",\"\"password\"\":\"\"password\"\"}')",
       "Bash(SUPER_TOKEN=\"27|fkNT3z2Ua8txHx0o3bqji5aC3NR6v4Hpbzngn5CN2d8879da\")",
-      "Bash(__NEW_LINE_810353b050f14fa9__ curl:*)"
+      "Bash(__NEW_LINE_810353b050f14fa9__ curl:*)",
+      "Bash(composer install:*)",
+      "Bash(npm install:*)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

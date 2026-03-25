@@ -46,7 +46,9 @@ class StudentFeeController extends Controller
         $perPage = min((int) $request->input('per_page', 20), 100);
         $fees    = $query->paginate($perPage);
 
-        return $this->successResponse(StudentFeeResource::collection($fees)->response()->getData(true));
+        return $this->paginated(
+            $fees->through(fn ($f) => new StudentFeeResource($f)),
+        );
     }
 
     public function show(StudentFee $studentFee): JsonResponse

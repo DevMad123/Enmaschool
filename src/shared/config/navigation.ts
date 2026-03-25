@@ -13,19 +13,42 @@ export interface NavItem {
 }
 
 export const navigation: NavItem[] = [
+  // ── Dashboards (Phase 12) ────────────────────────────────────────────
   {
     label: 'Tableau de bord',
-    path: '/dashboard',
+    path: '/school/dashboard',
     icon: 'LayoutDashboard',
-    roles: [
-      'school_admin',
-      'director',
-      'teacher',
-      'accountant',
-      'staff',
-      'student',
-      'parent',
-    ],
+    roles: ['school_admin', 'director', 'teacher', 'accountant', 'staff'],
+  },
+  {
+    label: 'Dashboard Direction',
+    path: '/school/dashboard/direction',
+    icon: 'Home',
+    roles: ['school_admin', 'director'],
+  },
+  {
+    label: 'Dashboard Académique',
+    path: '/school/dashboard/academic',
+    icon: 'TrendingUp',
+    roles: ['school_admin', 'director', 'teacher'],
+  },
+  {
+    label: 'Dashboard Présences',
+    path: '/school/dashboard/attendance',
+    icon: 'UserCheck',
+    roles: ['school_admin', 'director', 'staff'],
+  },
+  {
+    label: 'Dashboard Financier',
+    path: '/school/dashboard/financial',
+    icon: 'BarChart2',
+    roles: ['school_admin', 'director', 'accountant'],
+  },
+  {
+    label: 'Rapports & Exports',
+    path: '/school/reports',
+    icon: 'Download',
+    roles: ['school_admin', 'director', 'accountant'],
   },
 
   // ── School Configuration (Phase 2) ───────────────────────────────────
@@ -124,6 +147,31 @@ export const navigation: NavItem[] = [
     icon: 'ClipboardCheck',
     module: 'school',
     roles: ['school_admin', 'director', 'teacher'],
+  },
+
+  // ── Frais Scolaires & Paiements (Phase 10) ───────────────────────────
+  {
+    label: 'Frais scolaires',
+    path: '/school/payments',
+    icon: 'Wallet',
+    module: 'payments',
+    roles: ['school_admin', 'director', 'accountant'],
+  },
+
+  // ── Communication & Messagerie (Phase 11) ───────────────────────────
+  {
+    label: 'Messagerie',
+    path: '/school/messaging',
+    icon: 'MessageSquare',
+    module: 'messaging',
+    roles: ['school_admin', 'director', 'teacher', 'accountant', 'staff'],
+  },
+  {
+    label: 'Annonces',
+    path: '/school/announcements',
+    icon: 'Megaphone',
+    module: 'messaging',
+    roles: ['school_admin', 'director', 'teacher', 'accountant', 'staff'],
   },
 
   // ── Rôles & Utilisateurs (Phase 3) ───────────────────────────────────

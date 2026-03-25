@@ -25,6 +25,15 @@ use App\Http\Controllers\Tenant\AttendanceController;
 use App\Http\Controllers\Tenant\JustificationController;
 use App\Http\Controllers\Tenant\TimeSlotController;
 use App\Http\Controllers\Tenant\TimetableController;
+use App\Http\Controllers\Tenant\FeeTypeController;
+use App\Http\Controllers\Tenant\FeeScheduleController;
+use App\Http\Controllers\Tenant\StudentFeeController;
+use App\Http\Controllers\Tenant\PaymentController;
+use App\Http\Controllers\Tenant\ConversationController;
+use App\Http\Controllers\Tenant\AnnouncementController;
+use App\Http\Controllers\Tenant\NotificationController;
+use App\Http\Controllers\Tenant\DashboardController;
+use App\Http\Controllers\Tenant\ReportController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -357,6 +366,123 @@ Route::middleware([
                  ->only(['index', 'store', 'show', 'destroy']);
             Route::post('justifications/{justification}/review', [JustificationController::class, 'review'])
                  ->middleware('can:attendance.reports');
+
+            // ── Frais Scolaires & Paiements (Phase 10) ─────────────────
+            Route::middleware('module:payments')->group(function (): void {
+
+            // ── Types de frais ─────────────────────────────────────
+            Route::apiResource('fee-types', FeeTypeController::class);
+
+            // ── Grilles tarifaires ─────────────────────────────────
+            // Routes spécifiques avant la route générale pour éviter les conflits
+            Route::post('fee-schedules/bulk', [FeeScheduleController::class, 'bulkSet'])
+                 ->middleware('can:payments.create');
+            Route::post('fee-schedules/copy', [FeeScheduleController::class, 'copyFromYear'])
+                 ->middleware('can:payments.create');
+            Route::get('fee-schedules', [FeeScheduleController::class, 'index'])
+                 ->middleware('can:payments.view');
+            Route::post('fee-schedules', [FeeScheduleController::class, 'set'])
+                 ->middleware('can:payments.create');
+
+            // ── Frais élèves ───────────────────────────────────────
+            Route::get('student-fees/balance/{enrollment}', [StudentFeeController::class, 'balance'])
+                 ->middleware('can:payments.view');
+            Route::apiResource('student-fees', StudentFeeController::class)
+                 ->only(['index', 'show']);
+            Route::post('student-fees/{studentFee}/discount', [StudentFeeController::class, 'applyDiscount'])
+                 ->middleware('can:payments.validate');
+            Route::post('student-fees/{studentFee}/waive', [StudentFeeController::class, 'waive'])
+                 ->middleware('can:payments.validate');
+            Route::get('student-fees/{studentFee}/installments', [StudentFeeController::class, 'installments'])
+                 ->middleware('can:payments.view');
+            Route::post('student-fees/{studentFee}/installments', [StudentFeeController::class, 'setInstallments'])
+                 ->middleware('can:payments.create');
+
+            // ── Paiements ──────────────────────────────────────────
+            // Routes spécifiques avant apiResource pour éviter les conflits
+            Route::get('payments/report/daily', [PaymentController::class, 'dailyReport'])
+                 ->middleware('can:payments.reports');
+            Route::get('payments/report/monthly', [PaymentController::class, 'monthlyReport'])
+                 ->middleware('can:payments.reports');
+            Route::get('payments/stats', [PaymentController::class, 'yearStats'])
+                 ->middleware('can:payments.reports');
+            Route::get('payments/class/{classe}', [PaymentController::class, 'classSummary'])
+                 ->middleware('can:payments.view');
+            Route::apiResource('payments', PaymentController::class)
+                 ->only(['index', 'store', 'show']);
+            Route::post('payments/{payment}/cancel', [PaymentController::class, 'cancel'])
+                 ->middleware('can:payments.validate');
+            Route::get('payments/{payment}/receipt', [PaymentController::class, 'download'])
+                 ->middleware('can:payments.view')
+                 ->name('api.payments.receipt');
+            });
+
+            // ── Phase 11: Communication & Messagerie ─────────────────────────
+            // Compteurs non lus (sans module guard — toujours accessible)
+            Route::get('messaging/unread-counts', [ConversationController::class, 'unreadCounts'])
+                 ->middleware('can:messaging.view');
+
+            // Notifications (sans module guard)
+            Route::get('notifications', [NotificationController::class, 'index']);
+            Route::post('notifications/read-all', [NotificationController::class, 'markAllRead']);
+            Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead']);
+            Route::delete('notifications/{notification}', [NotificationController::class, 'destroy']);
+
+            // Messagerie (avec module guard)
+            Route::middleware('module:messaging')->group(function (): void {
+                // Conversations
+                Route::get('conversations', [ConversationController::class, 'index']);
+                Route::post('conversations', [ConversationController::class, 'store']);
+                Route::get('conversations/{conversation}', [ConversationController::class, 'show']);
+                Route::get('conversations/{conversation}/messages', [ConversationController::class, 'messages']);
+                Route::post('conversations/{conversation}/messages', [ConversationController::class, 'sendMessage']);
+                Route::put('conversations/{conversation}/messages/{message}', [ConversationController::class, 'editMessage']);
+                Route::delete('conversations/{conversation}/messages/{message}', [ConversationController::class, 'deleteMessage']);
+                Route::post('conversations/{conversation}/read', [ConversationController::class, 'markRead']);
+
+                // Annonces
+                Route::get('announcements', [AnnouncementController::class, 'index']);
+                Route::post('announcements/read-all', [AnnouncementController::class, 'markAllRead']);
+                Route::post('announcements', [AnnouncementController::class, 'store'])
+                     ->middleware('role:school_admin,director');
+                Route::get('announcements/{announcement}', [AnnouncementController::class, 'show']);
+                Route::put('announcements/{announcement}', [AnnouncementController::class, 'update'])
+                     ->middleware('role:school_admin,director');
+                Route::post('announcements/{announcement}/publish', [AnnouncementController::class, 'publish'])
+                     ->middleware('role:school_admin,director');
+                Route::delete('announcements/{announcement}', [AnnouncementController::class, 'destroy'])
+                     ->middleware('role:school_admin,director');
+                Route::post('announcements/{announcement}/read', [AnnouncementController::class, 'markRead']);
+            });
+
+            // ── Phase 12 : Dashboards & Rapports ─────────────────────────────
+            // Dashboards
+            Route::get('dashboard/direction', [DashboardController::class, 'direction'])
+                 ->middleware('role:school_admin,director');
+            Route::get('dashboard/academic', [DashboardController::class, 'academic'])
+                 ->middleware('can:reports.view');
+            Route::get('dashboard/attendance', [DashboardController::class, 'attendance'])
+                 ->middleware('can:attendance.reports');
+            Route::get('dashboard/financial', [DashboardController::class, 'financial'])
+                 ->middleware('can:payments.reports');
+            Route::get('dashboard/teacher', [DashboardController::class, 'teacher'])
+                 ->middleware('role:teacher');
+            Route::post('dashboard/cache/invalidate', [DashboardController::class, 'invalidateCache'])
+                 ->middleware('role:school_admin');
+
+            // Exports & Rapports
+            Route::get('reports/students/export', [ReportController::class, 'exportStudents'])
+                 ->middleware('can:reports.export');
+            Route::get('reports/results/export', [ReportController::class, 'exportResults'])
+                 ->middleware('can:reports.export');
+            Route::get('reports/attendance/export', [ReportController::class, 'exportAttendance'])
+                 ->middleware('can:reports.export');
+            Route::get('reports/payments/export', [ReportController::class, 'exportPayments'])
+                 ->middleware('can:reports.export');
+            Route::post('reports/class-results', [ReportController::class, 'generateClassResults'])
+                 ->middleware('can:reports.export');
+            Route::post('reports/year-summary', [ReportController::class, 'generateYearSummary'])
+                 ->middleware('role:school_admin,director');
         });
     });
 });

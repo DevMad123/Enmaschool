@@ -16,6 +16,7 @@ import { StudentFormModal } from './StudentFormModal'
 import { EnrollmentModal } from './EnrollmentModal'
 import { useStudent } from '../hooks/useStudents'
 import { StudentAttendanceTab } from './StudentAttendanceTab'
+import { StudentPaymentTab } from './StudentPaymentTab'
 
 const TABS = [
   { key: 'dossier', label: 'Dossier' },
@@ -197,7 +198,9 @@ export function StudentDetailPage() {
           />
         )}
         {activeTab === 'paiements' && (
-          <Placeholder title="Frais scolaires" phase="Phase 10" />
+          <StudentPaymentTab
+            enrollmentId={student.current_enrollment?.id ?? 0}
+          />
         )}
       </div>
 

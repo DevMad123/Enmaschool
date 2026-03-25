@@ -4,6 +4,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\CheckModule;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EnsureTenantIsActive;
 use Illuminate\Auth\AuthenticationException;
@@ -33,7 +34,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth'         => Authenticate::class,
             'tenant.active' => EnsureTenantIsActive::class,
-            'role' => CheckRole::class,
+            'role'         => CheckRole::class,
+            'module'       => CheckModule::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

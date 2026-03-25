@@ -58,6 +58,25 @@ import { AttendanceSheetPage } from '@/modules/school/pages/AttendanceSheetPage'
 import { ClassAttendanceStatsPage } from '@/modules/school/pages/ClassAttendanceStatsPage';
 import { JustificationsPage } from '@/modules/school/pages/JustificationsPage';
 
+// ── School module pages (Phase 10) ───────────────────────────────────
+import { PaymentsPage } from '@/modules/school/pages/PaymentsPage';
+import { StudentPaymentPage } from '@/modules/school/pages/StudentPaymentPage';
+import { FeeConfigPage } from '@/modules/school/pages/FeeConfigPage';
+import { DailyReportPage } from '@/modules/school/pages/DailyReportPage';
+
+// ── School module pages (Phase 11) ───────────────────────────────────
+import { MessagingPage } from '@/modules/school/pages/MessagingPage';
+import { AnnouncementsPage } from '@/modules/school/pages/AnnouncementsPage';
+
+// ── School module pages (Phase 12) ───────────────────────────────────
+import { SchoolDashboardPage } from '@/modules/school/pages/SchoolDashboardPage';
+import { DirectionDashboardPage } from '@/modules/school/pages/DirectionDashboardPage';
+import { AcademicDashboardPage } from '@/modules/school/pages/AcademicDashboardPage';
+import { AttendanceDashboardPage } from '@/modules/school/pages/AttendanceDashboardPage';
+import { FinancialDashboardPage } from '@/modules/school/pages/FinancialDashboardPage';
+import { TeacherDashboardPage } from '@/modules/school/pages/TeacherDashboardPage';
+import { ReportsPage } from '@/modules/school/pages/ReportsPage';
+
 // ── School module pages (Phase 3) ────────────────────────────────────
 import { UsersPage } from '@/modules/school/pages/users/UsersPage';
 import { UserDetailPage } from '@/modules/school/pages/users/UserDetailPage';
@@ -272,10 +291,14 @@ export const routes: RouteObject[] = [
     children: [
       {
         index: true,
-        element: <Navigate to="/dashboard" replace />,
+        element: <Navigate to="/school/dashboard" replace />,
       },
       {
         path: 'dashboard',
+        element: <Navigate to="/school/dashboard" replace />,
+      },
+      {
+        path: 'dashboard-home',
         element: (
           <RoleRoute
             roles={[
@@ -479,6 +502,116 @@ export const routes: RouteObject[] = [
         element: (
           <RoleRoute roles={['school_admin', 'director']}>
             <JustificationsPage />
+          </RoleRoute>
+        ),
+      },
+
+      // ── Frais Scolaires & Paiements (Phase 10) ──────────────────────
+      {
+        path: 'school/payments',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'accountant']}>
+            <PaymentsPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/payments/student/:enrollmentId',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'accountant']}>
+            <StudentPaymentPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/payments/config',
+        element: (
+          <RoleRoute roles={['school_admin', 'director']}>
+            <FeeConfigPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/payments/report',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'accountant']}>
+            <DailyReportPage />
+          </RoleRoute>
+        ),
+      },
+
+      // ── Dashboards & Rapports (Phase 12) ────────────────────────────
+      {
+        path: 'school/dashboard',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher', 'accountant', 'staff']}>
+            <SchoolDashboardPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/dashboard/direction',
+        element: (
+          <RoleRoute roles={['school_admin', 'director']}>
+            <DirectionDashboardPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/dashboard/academic',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher']}>
+            <AcademicDashboardPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/dashboard/attendance',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'staff']}>
+            <AttendanceDashboardPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/dashboard/financial',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'accountant']}>
+            <FinancialDashboardPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/dashboard/teacher',
+        element: (
+          <RoleRoute roles={['teacher']}>
+            <TeacherDashboardPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/reports',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'accountant']}>
+            <ReportsPage />
+          </RoleRoute>
+        ),
+      },
+
+      // ── Communication & Messagerie (Phase 11) ───────────────────────
+      {
+        path: 'school/messaging',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher', 'accountant', 'staff']}>
+            <MessagingPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: 'school/announcements',
+        element: (
+          <RoleRoute roles={['school_admin', 'director', 'teacher', 'accountant', 'staff']}>
+            <AnnouncementsPage />
           </RoleRoute>
         ),
       },

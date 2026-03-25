@@ -15,6 +15,16 @@ trait ApiResponse
         return $this->success($data, $message, 201);
     }
 
+    protected function successResponse(mixed $data = null, string $message = '', int $code = 200): JsonResponse
+    {
+        return $this->success($data, $message, $code);
+    }
+
+    protected function errorResponse(string $message, int $code = 400, array $errors = []): JsonResponse
+    {
+        return $this->error($message, $code, $errors);
+    }
+
     protected function success(mixed $data = null, string $message = '', int $code = 200): JsonResponse
     {
         return response()->json([

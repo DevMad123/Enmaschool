@@ -1,6 +1,6 @@
 // ===== src/modules/school/pages/TeacherDashboardPage.tsx =====
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, BookOpen, Clock, Users } from 'lucide-react';
 import { useAcademicYears } from '../hooks/useAcademicYears';
@@ -12,15 +12,16 @@ import { KpiCard } from '../components/KpiCard';
 import { ProgressRing } from '../components/ProgressRing';
 
 export function TeacherDashboardPage() {
-  const { data: yearsData } = useAcademicYears();
+  const { data: yearsData, isLoading: yearsLoading } = useAcademicYears();
   const years = yearsData?.data ?? [];
   const currentYear = years.find((y) => y.is_current) ?? years[0];
-  const [yearId, setYearId] = useState<number>(currentYear?.id ?? 0);
+  const [yearId, setYearId] = useState<number>(0);
+  useEffect(() => { if (currentYear?.id && !yearId) setYearId(currentYear.id); }, [currentYear?.id, yearId]);
 
   const { data, isLoading, isFetching, refetch, error } = useTeacherDashboard(yearId);
   const navigate = useNavigate();
 
-  if (isLoading) return <DashboardSkeleton />;
+  if (yearsLoading || !yearId || isLoading) return <DashboardSkeleton />;
   if (error || !data) return <EmptyDashboard message="Impossible de charger votre tableau de bord." />;
 
   const hoursPercent = data.teacher.max_hours > 0

@@ -35,5 +35,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Explicit model binding for Tenant (BaseTenant uses UUID primary key)
         Route::bind('tenant', fn (string $value) => Tenant::findOrFail($value));
+
+        // Load channel definitions without calling Broadcast::routes() (which would register
+        // /broadcasting/auth with web middleware). The auth route is declared in routes/api.php
+        // with InitializeTenancyByDomain + auth:sanctum middleware instead.
+        require base_path('routes/channels.php');
     }
 }

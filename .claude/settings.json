@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Program Files/PostgreSQL/18/**)",
+      "Bash(\"/c/Program Files/PostgreSQL/18/bin/pg_isready\" -h 127.0.0.1 -p 5432)",
+      "Bash(cmd /c \"sc query postgresql\")",
+      "Bash(cmd /c \"wmic service where \"\"Name like ''postgres%''\"\" get Name,State\")",
+      "Bash(cmd /c \"net start\")",
+      "Bash(cmd /c tasklist)",
+      "Bash(cmd /c \"dir C:\\\\wamp64\\\\bin\\\\pgsql\\\\18\\\\data\\\\postgresql.conf\")"
+    ]
+  }
+}

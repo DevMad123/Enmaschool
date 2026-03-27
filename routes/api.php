@@ -58,6 +58,12 @@ Route::middleware([
     Route::post('/api/auth/login', [AuthController::class, 'login']);
     Route::post('/api/school/invitations/accept', [InvitationController::class, 'accept']);
 
+    // Broadcasting auth — inside the tenant group so InitializeTenancyByDomain runs first,
+    // then Sanctum validates the Bearer token before authorizing private channels.
+    Route::post('/broadcasting/auth', [\Illuminate\Broadcasting\BroadcastController::class, 'authenticate'])
+        ->middleware('auth:sanctum')
+        ->name('broadcasting.auth');
+
     // Routes protégées
     Route::middleware(['auth:sanctum', 'tenant.active'])->group(function (): void {
         Route::post('/api/auth/logout', [AuthController::class, 'logout']);
@@ -68,6 +74,7 @@ Route::middleware([
         Route::prefix('api/school')->group(function (): void {
 
             // ── Read-only routes (all authenticated users) ──────
+            Route::get('users/search', [UserController::class, 'search']);
             Route::get('school-levels', [SchoolLevelController::class, 'index']);
             Route::get('academic-years', [AcademicYearController::class, 'index']);
             Route::get('academic-years/{academicYear}', [AcademicYearController::class, 'show']);
@@ -81,12 +88,14 @@ Route::middleware([
             Route::get('rooms', [RoomController::class, 'index']);
             Route::get('rooms/{room}', [RoomController::class, 'show']);
             Route::get('settings', [SchoolSettingController::class, 'index']);
+            Route::get('settings/logo', [SchoolSettingController::class, 'getLogo']);
 
             // ── Write routes (school_admin & director only) ─────
             Route::middleware('role:school_admin,director')->group(function (): void {
                 // Settings
                 Route::put('settings', [SchoolSettingController::class, 'bulkUpdate']);
                 Route::put('settings/{key}', [SchoolSettingController::class, 'update']);
+                Route::post('settings/logo', [SchoolSettingController::class, 'uploadLogo']);
 
                 // Academic Years
                 Route::post('academic-years', [AcademicYearController::class, 'store']);

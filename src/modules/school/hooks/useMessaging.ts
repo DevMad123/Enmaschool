@@ -2,8 +2,19 @@ import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import type { ApiError } from '@/shared/types/api.types'
 import { toast } from '@/shared/lib/toast'
-import { conversationsApi, announcementsApi, notificationsApi } from '../api/messaging.api'
+import { conversationsApi, announcementsApi, notificationsApi, usersSearchApi } from '../api/messaging.api'
 import type { Message, AppNotification, Announcement } from '../types/messaging.types'
+
+// ── User search (for messaging) ───────────────────────────────────────────────
+
+export function useUserSearch(q: string) {
+  return useQuery({
+    queryKey: ['users-search', q],
+    queryFn: () => usersSearchApi.search(q).then(r => r.data.data),
+    enabled: q.trim().length >= 2,
+    staleTime: 30_000,
+  })
+}
 
 // ── Conversations ────────────────────────────────────────────────────────────
 

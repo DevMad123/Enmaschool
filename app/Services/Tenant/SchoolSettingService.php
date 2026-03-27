@@ -33,8 +33,10 @@ class SchoolSettingService
 
     public function bulkUpdate(array $settings): void
     {
-        foreach ($settings as $key => $value) {
-            $this->update($key, $value);
+        foreach ($settings as $item) {
+            if (isset($item['key'])) {
+                $this->update($item['key'], $item['value'] ?? null);
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 // ===== src/modules/school/pages/AttendanceDashboardPage.tsx =====
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, ClipboardCheck, Clock, UserCheck } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -13,16 +13,17 @@ import { EmptyDashboard } from '../components/EmptyDashboard';
 import { KpiCard } from '../components/KpiCard';
 
 export function AttendanceDashboardPage() {
-  const { data: yearsData } = useAcademicYears();
+  const { data: yearsData, isLoading: yearsLoading } = useAcademicYears();
   const years = yearsData?.data ?? [];
   const currentYear = years.find((y) => y.is_current) ?? years[0];
-  const [yearId, setYearId] = useState<number>(currentYear?.id ?? 0);
+  const [yearId, setYearId] = useState<number>(0);
+  useEffect(() => { if (currentYear?.id && !yearId) setYearId(currentYear.id); }, [currentYear?.id, yearId]);
   const [periodId, setPeriodId] = useState<number | undefined>();
 
   const { data, isLoading, isFetching, refetch, error } = useAttendanceDashboard(yearId, periodId);
   const navigate = useNavigate();
 
-  if (isLoading) return <DashboardSkeleton />;
+  if (yearsLoading || !yearId || isLoading) return <DashboardSkeleton />;
   if (error || !data) return <EmptyDashboard message="Impossible de charger les données de présence." />;
 
   const byClassChart = data.by_class.map((c) => ({

@@ -1,11 +1,11 @@
-// ===== src/modules/school/api/settings.api.ts =====
-
 import api from '@/shared/lib/axios'
 import type { ApiSuccess } from '@/shared/types/api.types'
-import type { SchoolSetting } from '../types/school.types'
+import type { SchoolSetting, SettingUpdatePayload } from '../types/school.types'
 
-export async function getSchoolSettings(): Promise<ApiSuccess<Record<string, SchoolSetting[]>>> {
-  const { data } = await api.get<ApiSuccess<Record<string, SchoolSetting[]>>>('/api/school/settings')
+type GroupedSettings = Record<string, SchoolSetting[]>
+
+export async function getSchoolSettings(): Promise<ApiSuccess<GroupedSettings>> {
+  const { data } = await api.get<ApiSuccess<GroupedSettings>>('/api/school/settings')
   return data
 }
 
@@ -18,8 +18,19 @@ export async function updateSchoolSetting(
 }
 
 export async function bulkUpdateSchoolSettings(
-  settings: Record<string, unknown>,
+  settings: SettingUpdatePayload[],
 ): Promise<ApiSuccess<null>> {
   const { data } = await api.put<ApiSuccess<null>>('/api/school/settings', { settings })
+  return data
+}
+
+export async function uploadSchoolLogo(file: File): Promise<ApiSuccess<{ url: string; path: string }>> {
+  const formData = new FormData()
+  formData.append('logo', file)
+  const { data } = await api.post<ApiSuccess<{ url: string; path: string }>>(
+    '/api/school/settings/logo',
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  )
   return data
 }

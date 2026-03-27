@@ -29,10 +29,12 @@ export const echo = new Echo({
   wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
   forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
   enabledTransports: ['ws', 'wss'],
-  authEndpoint: `${import.meta.env.VITE_API_URL ?? ''}/broadcasting/auth`,
+  // Use current origin so the auth request stays on the tenant domain (not the central domain).
+  authEndpoint: `${window.location.origin}/broadcasting/auth`,
   auth: {
     headers: {
-      Authorization: `Bearer ${getToken()}`,
+      // Read token lazily so it's always up-to-date after login.
+      get Authorization() { return `Bearer ${getToken()}` },
     },
   },
 })

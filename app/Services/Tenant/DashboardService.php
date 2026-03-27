@@ -42,13 +42,8 @@ class DashboardService
             $logoUrl       = SchoolSetting::get('logo_url');
             $passingAvg    = (float) SchoolSetting::get('passing_average', 10);
             $schoolTypes   = SchoolLevel::distinct('category')->pluck('category')
-                ->map(fn ($c) => match ($c) {
-                    'maternelle' => 'Maternelle',
-                    'primaire'   => 'Primaire',
-                    'college'    => 'Collège',
-                    'lycee'      => 'Lycée',
-                    default      => ucfirst($c),
-                })->implode(' + ');
+                ->map(fn ($c) => $c instanceof \App\Enums\LevelCategory ? $c->label() : ucfirst((string) $c))
+                ->implode(' + ');
 
             // ── Élèves ─────────────────────────────────────────────────────
             $enrollments = Enrollment::where('academic_year_id', $yearId)

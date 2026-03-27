@@ -87,7 +87,7 @@ class ReportService
             ];
 
             foreach ($subjects as $subject) {
-                $subjectAvg = SubjectAverage::where('enrollment_id', $enrollment->id)
+                $subjectAvg = PeriodAverage::where('enrollment_id', $enrollment->id)
                     ->where('subject_id', $subject->id)
                     ->where('period_id', $periodId)
                     ->value('average');

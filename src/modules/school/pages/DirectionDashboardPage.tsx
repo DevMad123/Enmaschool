@@ -1,6 +1,6 @@
 // ===== src/modules/school/pages/DirectionDashboardPage.tsx =====
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpen,
@@ -33,10 +33,11 @@ import { KpiCard } from '../components/KpiCard';
 import { CHART_COLORS, GENDER_COLORS, PIE_COLORS } from '../lib/dashboardHelpers';
 
 export function DirectionDashboardPage() {
-  const { data: yearsData } = useAcademicYears();
+  const { data: yearsData, isLoading: yearsLoading } = useAcademicYears();
   const years = yearsData?.data ?? [];
   const currentYear = years.find((y) => y.is_current) ?? years[0];
-  const [yearId, setYearId] = useState<number>(currentYear?.id ?? 0);
+  const [yearId, setYearId] = useState<number>(0);
+  useEffect(() => { if (currentYear?.id && !yearId) setYearId(currentYear.id); }, [currentYear?.id, yearId]);
 
   const { data, isLoading, isFetching, refetch, error } = useDirectionDashboard(yearId);
   const invalidate = useInvalidateDashboardCache();
@@ -44,7 +45,7 @@ export function DirectionDashboardPage() {
   const isAdmin = roles.includes('school_admin');
   const navigate = useNavigate();
 
-  if (isLoading) return <DashboardSkeleton />;
+  if (yearsLoading || !yearId || isLoading) return <DashboardSkeleton />;
   if (error || !data) return <EmptyDashboard message="Impossible de charger le tableau de bord." />;
 
   // PieChart : élèves par catégorie

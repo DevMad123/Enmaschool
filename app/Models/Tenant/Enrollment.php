@@ -8,6 +8,7 @@ use App\Enums\EnrollmentStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 // NB : pas de SoftDeletes — une inscription est un document officiel.
 class Enrollment extends Model
@@ -59,6 +60,11 @@ class Enrollment extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function periodAverages(): HasMany
+    {
+        return $this->hasMany(PeriodAverage::class);
     }
 
     // ── Scopes ─────────────────────────────────────────────────

@@ -50,19 +50,20 @@ class StoreClasseRequest extends FormRequest
                 $v->errors()->add('serie', 'La série est obligatoire pour ce niveau (2nde, 1ère ou Terminale).');
             }
 
-            if (! $level->requires_serie && ! empty($serie)) {
-                $v->errors()->add('serie', 'Ce niveau ne doit pas avoir de série.');
-            }
+            // For non-lycée levels, serie is silently stripped by the service — no rejection here.
 
             // Unicité (academic_year_id, school_level_id, serie, section)
+            // For non-lycée levels, the effective serie will be null after service processing.
+            $effectiveSerie = $level->requires_serie ? $serie : null;
+
             $query = \App\Models\Tenant\Classe::where('academic_year_id', $this->input('academic_year_id'))
                 ->where('school_level_id', $levelId)
                 ->where('section', $this->input('section'));
 
-            if (empty($serie)) {
+            if (empty($effectiveSerie)) {
                 $query->whereNull('serie');
             } else {
-                $query->where('serie', $serie);
+                $query->where('serie', $effectiveSerie);
             }
 
             if ($query->exists()) {

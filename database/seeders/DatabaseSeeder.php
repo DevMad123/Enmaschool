@@ -156,6 +156,9 @@ class DatabaseSeeder extends Seeder
 
             // Créneaux horaires (Phase 8)
             (new TimeSlotSeeder())->run();
+
+            // Paramètres école (Phase Settings)
+            (new SchoolSettingsSeeder())->run();
         });
 
         // -----------------------------------------------------------------

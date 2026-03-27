@@ -1,6 +1,6 @@
 // ===== src/modules/school/pages/FinancialDashboardPage.tsx =====
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertCircle, TrendingUp, Wallet } from 'lucide-react';
 import {
   Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart,
@@ -17,14 +17,15 @@ import { ProgressRing } from '../components/ProgressRing';
 import { getCollectionRateColor, PIE_COLORS } from '../lib/dashboardHelpers';
 
 export function FinancialDashboardPage() {
-  const { data: yearsData } = useAcademicYears();
+  const { data: yearsData, isLoading: yearsLoading } = useAcademicYears();
   const years = yearsData?.data ?? [];
   const currentYear = years.find((y) => y.is_current) ?? years[0];
-  const [yearId, setYearId] = useState<number>(currentYear?.id ?? 0);
+  const [yearId, setYearId] = useState<number>(0);
+  useEffect(() => { if (currentYear?.id && !yearId) setYearId(currentYear.id); }, [currentYear?.id, yearId]);
 
   const { data, isLoading, isFetching, refetch, error } = useFinancialDashboard(yearId);
 
-  if (isLoading) return <DashboardSkeleton />;
+  if (yearsLoading || !yearId || isLoading) return <DashboardSkeleton />;
   if (error || !data) return <EmptyDashboard message="Impossible de charger les données financières." />;
 
   const collectionColor = getCollectionRateColor(data.summary.collection_rate);

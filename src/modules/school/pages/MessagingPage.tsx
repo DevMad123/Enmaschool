@@ -1,9 +1,10 @@
-import { useState } from 'react'
-import { MessageSquare, Plus, Search, X } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { MessageSquare, Plus, Search, X, Check } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { LoadingSpinner } from '@/shared/components/feedback/LoadingSpinner'
 import { ConversationItem } from '../components/ConversationItem'
-import { useConversations, useConversationMessages, useSendMessage, useMarkConversationRead, useCreateConversation, useConversationChannel } from '../hooks/useMessaging'
+import { useConversations, useConversationMessages, useSendMessage, useMarkConversationRead, useCreateConversation, useConversationChannel, useUserSearch } from '../hooks/useMessaging'
+import type { UserSearchResult } from '../api/messaging.api'
 import type { Conversation } from '../types/messaging.types'
 
 export function MessagingPage() {
@@ -166,8 +167,10 @@ function MessageBubble({ message, showSender }: { message: any; showSender?: boo
   return (
     <div className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[70%] rounded-2xl px-3 py-2 ${isMine ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
-        {showSender && !isMine && (
-          <p className="mb-1 text-xs font-semibold text-indigo-400">{message.sender?.full_name}</p>
+        {showSender && message.sender?.full_name && (
+          <p className={`mb-1 text-xs font-semibold ${isMine ? 'text-indigo-200' : 'text-indigo-500'}`}>
+            {message.sender.full_name}
+          </p>
         )}
         <p className={`text-sm ${isDeleted ? 'italic opacity-60' : ''}`}>{message.body}</p>
         <div className={`mt-1 flex items-center gap-1 text-[10px] ${isMine ? 'text-indigo-200' : 'text-gray-400'}`}>
@@ -179,19 +182,151 @@ function MessageBubble({ message, showSender }: { message: any; showSender?: boo
   )
 }
 
+// ── User Search Picker ────────────────────────────────────────────────────────
+
+function UserPicker({
+  selected,
+  onSelect,
+  onRemove,
+  multiple = false,
+  placeholder = 'Rechercher par nom, prénom ou email…',
+}: {
+  selected: UserSearchResult[]
+  onSelect: (user: UserSearchResult) => void
+  onRemove: (id: number) => void
+  multiple?: boolean
+  placeholder?: string
+}) {
+  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const { data: results = [], isFetching } = useUserSearch(query)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const isSelected = (id: number) => selected.some(u => u.id === id)
+
+  const roleLabel: Record<string, string> = {
+    school_admin: 'Admin',
+    director: 'Directeur',
+    teacher: 'Enseignant',
+    accountant: 'Comptable',
+    staff: 'Personnel',
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      {/* Selected chips */}
+      {selected.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {selected.map(u => (
+            <span key={u.id} className="flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+              {u.full_name}
+              <button type="button" onClick={() => onRemove(u.id)} className="ml-0.5 rounded-full hover:bg-indigo-200">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Search input */}
+      {(multiple || selected.length === 0) && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            placeholder={placeholder}
+            value={query}
+            onChange={e => { setQuery(e.target.value); setOpen(true) }}
+            onFocus={() => setOpen(true)}
+          />
+          {isFetching && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <LoadingSpinner size="sm" />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Dropdown */}
+      {open && query.trim().length >= 2 && (
+        <div className="absolute z-10 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+          {results.length === 0 && !isFetching ? (
+            <p className="p-3 text-center text-sm text-gray-400">Aucun résultat</p>
+          ) : (
+            <ul className="max-h-52 overflow-y-auto divide-y divide-gray-50">
+              {results.map(user => (
+                <li key={user.id}>
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-indigo-50 transition-colors"
+                    onClick={() => {
+                      onSelect(user)
+                      if (!multiple) { setQuery(''); setOpen(false) }
+                      else setQuery('')
+                    }}
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-500 text-xs font-bold text-white">
+                      {user.full_name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">{user.full_name}</p>
+                      <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                    </div>
+                    {user.role && (
+                      <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">
+                        {roleLabel[user.role] ?? user.role}
+                      </span>
+                    )}
+                    {isSelected(user.id) && <Check className="h-4 w-4 shrink-0 text-indigo-500" />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── New Conversation Modal ─────────────────────────────────────────────────────
+
 function NewConversationModal({ onClose }: { onClose: () => void }) {
   const [tab, setTab] = useState<'direct' | 'group'>('direct')
-  const [userId, setUserId] = useState('')
+  const [selectedUsers, setSelectedUsers] = useState<UserSearchResult[]>([])
   const [groupName, setGroupName] = useState('')
   const createConv = useCreateConversation()
 
-  const handleCreate = () => {
-    if (tab === 'direct' && userId) {
-      createConv.mutate({ type: 'direct', user_ids: [Number(userId)] }, { onSuccess: onClose })
-    } else if (tab === 'group' && groupName) {
-      createConv.mutate({ type: 'group', name: groupName, user_ids: userId.split(',').map(Number).filter(Boolean) }, { onSuccess: onClose })
+  const handleSelect = (user: UserSearchResult) => {
+    if (tab === 'direct') {
+      setSelectedUsers([user])
+    } else if (!selectedUsers.some(u => u.id === user.id)) {
+      setSelectedUsers(prev => [...prev, user])
     }
   }
+
+  const handleRemove = (id: number) => setSelectedUsers(prev => prev.filter(u => u.id !== id))
+
+  const handleCreate = () => {
+    const userIds = selectedUsers.map(u => u.id)
+    if (tab === 'direct' && userIds.length === 1) {
+      createConv.mutate({ type: 'direct', user_ids: userIds }, { onSuccess: onClose })
+    } else if (tab === 'group' && groupName.trim() && userIds.length > 0) {
+      createConv.mutate({ type: 'group', name: groupName.trim(), user_ids: userIds }, { onSuccess: onClose })
+    }
+  }
+
+  const canCreate = tab === 'direct'
+    ? selectedUsers.length === 1
+    : selectedUsers.length > 0 && groupName.trim().length > 0
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -200,24 +335,36 @@ function NewConversationModal({ onClose }: { onClose: () => void }) {
           <h3 className="font-semibold text-gray-900">Nouvelle conversation</h3>
           <button onClick={onClose} className="rounded p-1 hover:bg-gray-100"><X className="h-5 w-5" /></button>
         </div>
+
         <div className="flex gap-2 mb-4">
           {(['direct', 'group'] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)}
+            <button key={t} onClick={() => { setTab(t); setSelectedUsers([]) }}
               className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${tab === t ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
               {t === 'direct' ? '💬 Direct' : '👥 Groupe'}
             </button>
           ))}
         </div>
-        {tab === 'direct' ? (
-          <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="ID de l'utilisateur" value={userId} onChange={e => setUserId(e.target.value)} />
-        ) : (
-          <div className="space-y-3">
-            <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Nom du groupe" value={groupName} onChange={e => setGroupName(e.target.value)} />
-            <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="IDs membres (séparés par virgule)" value={userId} onChange={e => setUserId(e.target.value)} />
-          </div>
-        )}
-        <Button className="mt-4 w-full" onClick={handleCreate} disabled={createConv.isPending}>
-          Créer
+
+        <div className="space-y-3">
+          {tab === 'group' && (
+            <input
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              placeholder="Nom du groupe"
+              value={groupName}
+              onChange={e => setGroupName(e.target.value)}
+            />
+          )}
+          <UserPicker
+            selected={selectedUsers}
+            onSelect={handleSelect}
+            onRemove={handleRemove}
+            multiple={tab === 'group'}
+            placeholder={tab === 'direct' ? 'Rechercher un destinataire…' : 'Ajouter des membres…'}
+          />
+        </div>
+
+        <Button className="mt-5 w-full" onClick={handleCreate} disabled={!canCreate || createConv.isPending}>
+          {createConv.isPending ? 'Création…' : 'Créer la conversation'}
         </Button>
       </div>
     </div>

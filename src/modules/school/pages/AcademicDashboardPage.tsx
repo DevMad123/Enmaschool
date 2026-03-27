@@ -1,6 +1,6 @@
 // ===== src/modules/school/pages/AcademicDashboardPage.tsx =====
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BookOpen, ClipboardList, GraduationCap, TrendingUp } from 'lucide-react';
 import { useAcademicYears, useAcademicYearPeriods } from '../hooks/useAcademicYears';
 import { useAcademicDashboard } from '../hooks/useDashboard';
@@ -12,17 +12,18 @@ import { KpiCard } from '../components/KpiCard';
 import { PassingRateChart } from '../components/PassingRateChart';
 
 export function AcademicDashboardPage() {
-  const { data: yearsData } = useAcademicYears();
+  const { data: yearsData, isLoading: yearsLoading } = useAcademicYears();
   const years = yearsData?.data ?? [];
   const currentYear = years.find((y) => y.is_current) ?? years[0];
-  const [yearId, setYearId] = useState<number>(currentYear?.id ?? 0);
+  const [yearId, setYearId] = useState<number>(0);
+  useEffect(() => { if (currentYear?.id && !yearId) setYearId(currentYear.id); }, [currentYear?.id, yearId]);
   const [periodId, setPeriodId] = useState<number | undefined>();
 
   const { data, isLoading, isFetching, refetch, error } = useAcademicDashboard(yearId, periodId);
-  const { data: periodsData = [] } = useAcademicYearPeriods(yearId);
-  const periods = periodsData as Array<{ id: number; name: string }>;
+  const { data: periodsData } = useAcademicYearPeriods(yearId);
+  const periods: Array<{ id: number; name: string }> = periodsData?.data ?? [];
 
-  if (isLoading) return <DashboardSkeleton />;
+  if (yearsLoading || !yearId || isLoading) return <DashboardSkeleton />;
   if (error || !data) return <EmptyDashboard message="Impossible de charger les données académiques." />;
 
   const bySubjectChart = data.by_subject.map((s) => ({

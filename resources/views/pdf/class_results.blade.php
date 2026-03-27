@@ -94,7 +94,7 @@
           <td class="left">{{ $enrollment->student?->last_name }} {{ $enrollment->student?->first_name }}</td>
           @foreach($subjects as $subject)
             @php
-              $subAvg = \App\Models\Tenant\SubjectAverage::where('enrollment_id', $enrollment->id)
+              $subAvg = \App\Models\Tenant\PeriodAverage::where('enrollment_id', $enrollment->id)
                 ->where('subject_id', $subject->id)
                 ->where('period_id', $period->id)
                 ->value('average');
@@ -118,7 +118,7 @@
         <td colspan="2" style="text-align:left; padding-left:8px">Statistiques de la classe</td>
         @foreach($subjects as $subject)
           @php
-            $subjectClassAvg = \App\Models\Tenant\SubjectAverage::whereIn(
+            $subjectClassAvg = \App\Models\Tenant\PeriodAverage::whereIn(
               'enrollment_id', $enrollments->pluck('id')
             )->where('subject_id', $subject->id)->where('period_id', $period->id)->avg('average');
           @endphp

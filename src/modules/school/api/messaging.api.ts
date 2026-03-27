@@ -48,6 +48,19 @@ export const announcementsApi = {
     api.post<ApiSuccess<{ marked: number }>>(`${BASE}/announcements/read-all`),
 }
 
+export type UserSearchResult = {
+  id: number
+  full_name: string
+  email: string
+  avatar_url: string | null
+  role: string | null
+}
+
+export const usersSearchApi = {
+  search: (q: string) =>
+    api.get<{ data: UserSearchResult[] }>(`${BASE}/users/search`, { params: { q } }),
+}
+
 export const notificationsApi = {
   getAll: (params?: Record<string, unknown>) =>
     api.get<PaginatedResponse<AppNotification>>(`${BASE}/notifications`, { params }),

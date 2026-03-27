@@ -66,7 +66,7 @@ class Classe extends Model
             return "{$level->short_label} {$classe->serie}{$classe->section}";
         }
 
-        return "{$level->label} {$classe->section}";
+        return "{$level->short_label} {$classe->section}";
     }
 
     // ── Relations ──────────────────────────────────────────────

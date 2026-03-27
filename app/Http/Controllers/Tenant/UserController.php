@@ -125,4 +125,34 @@ class UserController extends Controller
 
         return $this->success(data: new UserPermissionsResource($data));
     }
+
+    public function search(Request $request): JsonResponse
+    {
+        $term = (string) $request->query('q', '');
+        $excludeSelf = (bool) $request->query('exclude_self', true);
+
+        $query = User::query()
+            ->with('roles')
+            ->active()
+            ->where(function ($q) use ($term): void {
+                $q->where('first_name', 'ilike', "%{$term}%")
+                  ->orWhere('last_name', 'ilike', "%{$term}%")
+                  ->orWhere('email', 'ilike', "%{$term}%");
+            })
+            ->limit(15);
+
+        if ($excludeSelf) {
+            $query->where('id', '!=', $request->user()->id);
+        }
+
+        $users = $query->get();
+
+        return $this->success(data: $users->map(fn ($u) => [
+            'id'         => $u->id,
+            'full_name'  => $u->full_name,
+            'email'      => $u->email,
+            'avatar_url' => $u->avatar_url,
+            'role'       => $u->roles->first()?->name,
+        ]));
+    }
 }

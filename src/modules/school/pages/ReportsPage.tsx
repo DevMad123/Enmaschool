@@ -1,6 +1,6 @@
 // ===== src/modules/school/pages/ReportsPage.tsx =====
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BarChart2, Calendar, FileText, GraduationCap, Loader2, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAcademicYears, useAcademicYearPeriods } from '../hooks/useAcademicYears';
@@ -20,7 +20,8 @@ export function ReportsPage() {
   const { data: yearsData } = useAcademicYears();
   const years = yearsData?.data ?? [];
   const currentYear = years.find((y) => y.is_current) ?? years[0];
-  const [yearId, setYearId] = useState<number>(currentYear?.id ?? 0);
+  const [yearId, setYearId] = useState<number>(0);
+  useEffect(() => { if (currentYear?.id && !yearId) setYearId(currentYear.id); }, [currentYear?.id, yearId]);
 
   const { data: classesData } = useClasses();
   const classes = classesData?.data ?? [];

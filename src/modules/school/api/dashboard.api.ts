@@ -12,55 +12,55 @@ import type {
 
 export const dashboardApi = {
   getDirection: (yearId: number) =>
-    api.get<ApiSuccess<DirectionDashboard>>('/school/dashboard/direction', {
+    api.get<ApiSuccess<DirectionDashboard>>('/api/school/dashboard/direction', {
       params: { year_id: yearId },
     }),
 
   getAcademic: (yearId: number, periodId?: number) =>
-    api.get<ApiSuccess<AcademicDashboard>>('/school/dashboard/academic', {
+    api.get<ApiSuccess<AcademicDashboard>>('/api/school/dashboard/academic', {
       params: { year_id: yearId, period_id: periodId },
     }),
 
   getAttendance: (yearId: number, periodId?: number, date?: string) =>
-    api.get<ApiSuccess<AttendanceDashboard>>('/school/dashboard/attendance', {
+    api.get<ApiSuccess<AttendanceDashboard>>('/api/school/dashboard/attendance', {
       params: { year_id: yearId, period_id: periodId, date },
     }),
 
   getFinancial: (yearId: number) =>
-    api.get<ApiSuccess<FinancialDashboard>>('/school/dashboard/financial', {
+    api.get<ApiSuccess<FinancialDashboard>>('/api/school/dashboard/financial', {
       params: { year_id: yearId },
     }),
 
   getTeacher: (yearId: number) =>
-    api.get<ApiSuccess<TeacherDashboard>>('/school/dashboard/teacher', {
+    api.get<ApiSuccess<TeacherDashboard>>('/api/school/dashboard/teacher', {
       params: { year_id: yearId },
     }),
 
-  invalidateCache: () => api.post('/school/dashboard/cache/invalidate'),
+  invalidateCache: () => api.post('/api/school/dashboard/cache/invalidate'),
 };
 
 export const reportsApi = {
   exportStudents: (params: Record<string, unknown>) =>
-    api.get('/school/reports/students/export', { params, responseType: 'blob' }),
+    api.get('/api/school/reports/students/export', { params, responseType: 'blob' }),
 
   exportResults: (params: Record<string, unknown>) =>
-    api.get('/school/reports/results/export', { params, responseType: 'blob' }),
+    api.get('/api/school/reports/results/export', { params, responseType: 'blob' }),
 
   exportAttendance: (params: Record<string, unknown>) =>
-    api.get('/school/reports/attendance/export', { params, responseType: 'blob' }),
+    api.get('/api/school/reports/attendance/export', { params, responseType: 'blob' }),
 
   exportPayments: (params: Record<string, unknown>) =>
-    api.get('/school/reports/payments/export', { params, responseType: 'blob' }),
+    api.get('/api/school/reports/payments/export', { params, responseType: 'blob' }),
 
   generateClassResults: (classId: number, periodId: number) =>
     api.post(
-      '/school/reports/class-results',
+      '/api/school/reports/class-results',
       { class_id: classId, period_id: periodId },
       { responseType: 'blob' },
     ),
 
   generateYearSummary: (yearId: number) =>
-    api.post<ApiSuccess<{ message: string }>>('/school/reports/year-summary', {
+    api.post<ApiSuccess<{ message: string }>>('/api/school/reports/year-summary', {
       year_id: yearId,
     }),
 };

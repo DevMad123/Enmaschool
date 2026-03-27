@@ -200,3 +200,8 @@ export interface SchoolSetting {
   label: string
   description: string | null
 }
+
+export interface SettingUpdatePayload {
+  key: string
+  value: unknown
+}
